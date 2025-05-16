@@ -1,21 +1,15 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, Button, FlatList, StyleSheet } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation';
+import { usePets } from '../context/PetsContext';
 
 // Define las propiedades de navegación para esta pantalla
 // Indica que PetsScreen pertenece al stack de navegación y está asociada a la ruta 'Pets'
 type Props = NativeStackScreenProps<RootStackParamList, 'Pets'>;
 
 export default function PetsScreen({ navigation }: Props) {
-  // Estado que almacena la lista de mascotas
-  // Cada mascota tiene: id (identificador único), nombre y especie
-  const [pets, setPets] = useState([
-    { id: '1', nombre: 'Firulais', especie: 'Perro' },
-    { id: '2', nombre: 'Misu', especie: 'Gato' },
-    { id: '3', nombre: 'Pico', especie: 'Loro' },
-    { id: '4', nombre: 'Nube', especie: 'Conejo' }, 
-  ]);
+  const { pets } = usePets();
 
   return (
     <View style={styles.container}>

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation';
+import { usePets } from '../context/PetsContext';
 
 // Define las propiedades de navegación para esta pantalla
 // Indica que AddPetScreen pertenece al stack de navegación con la ruta 'AddPet'
@@ -11,11 +12,14 @@ export default function AddPetScreen({ navigation }: Props) {
   // Estados para almacenar los datos del formulario
   const [nombre, setNombre] = useState(''); // Guarda el nombre de la mascota
   const [tipo, setTipo] = useState('');    // Guarda el tipo/raza de la mascota
+  const { addPet } = usePets();
 
   // Función que se ejecuta al presionar el botón Guardar
   const handleAddPet = () => {
-    // (Futura implementación: aquí se guardaría la mascota en la base de datos)
-    navigation.goBack(); // Regresa a la pantalla anterior (PetsScreen)
+    if (nombre && tipo) {
+      addPet({ nombre, especie: tipo });
+      navigation.goBack(); // Regresa a la pantalla anterior (PetsScreen)
+    }
   };
 
   return (

@@ -1,13 +1,16 @@
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, View } from 'react-native';
 import AppNavigator from './src/navigation';
+import { PetsProvider } from './src/context/PetsContext';
 
 export default function App() {
   return (
-    <View style={{ flex: 1 }}>
-      <AppNavigator />
-      <StatusBar style="auto" />
-    </View>
+    <PetsProvider>
+      <View style={{ flex: 1 }}>
+        <AppNavigator />
+        <StatusBar style="auto" />
+      </View>
+    </PetsProvider>
   );
 }
 
