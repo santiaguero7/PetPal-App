@@ -1,14 +1,14 @@
 import React, { createContext, useContext, useState } from 'react';
 
 // Tipo para mascotas (id, nombre, especie)
-type Pet = {
+export type Pet = {
   id: string;
   nombre: string;
   especie: string;
   tamano: 'chica' | 'mediana' | 'grande';
   raza: string;
   edad: string;
-  foto?: string; 
+  descripcion?: string;
 };
 
 type PetsContextType = {

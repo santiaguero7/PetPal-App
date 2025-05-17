@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
-import ModalSelector from 'react-native-modal-selector';
+import { View, Text, Button, StyleSheet, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import PetForm from '../components/PetForm';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation';
 import { usePets } from '../context/PetsContext';
-import { colors } from '../themes/colors';
-import PetForm from '../components/PetForm';
+
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AddPet'>;
 
@@ -51,10 +50,11 @@ const TAMANOS = [
 
 export default function AddPetScreen({ navigation }: Props) {
   const [nombre, setNombre] = useState('');
-  const [especie, setEspecie] = useState<string | null>(null);
-  const [tamano, setTamano] = useState<string | null>(null);
-  const [raza, setRaza] = useState<string | null>(null);
+  const [especie, setEspecie] = useState<string>(''); // NO null
+  const [tamano, setTamano] = useState<'chica' | 'mediana' | 'grande'>('mediana');
+  const [raza, setRaza] = useState<string>(''); // en vez de string | null
   const [edad, setEdad] = useState('');
+  const [descripcion, setDescripcion] = useState('');
   const { addPet } = usePets();
 
   const handleAddPet = () => {
@@ -87,9 +87,12 @@ export default function AddPetScreen({ navigation }: Props) {
         <PetForm
           nombre={nombre} setNombre={setNombre}
           especie={especie} setEspecie={setEspecie}
-          tamano={tamano} setTamano={setTamano}
+          tamano={tamano}
+          setTamano={setTamano}
           raza={raza} setRaza={setRaza}
           edad={edad} setEdad={setEdad}
+          descripcion={descripcion}
+          setDescripcion={setDescripcion}
           ESPECIES={ESPECIES}
           TAMANOS={TAMANOS}
           RAZAS_PERRO={RAZAS_PERRO}

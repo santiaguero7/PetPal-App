@@ -5,6 +5,8 @@ import { colors } from '../themes/colors';
 import { commonStyles } from '../themes/commonStyles';
 import { usePets } from '../context/PetsContext';
 import ModalSelector from 'react-native-modal-selector';
+import PetCard from '../components/PetCard';
+import PetForm from '../components/PetForm';
 
 const ESPECIES = [
   { key: 'Perro', label: 'Perro' },
@@ -56,10 +58,11 @@ export default function PetsScreen({ navigation }: Props) {
   const [editModal, setEditModal] = useState(false);
   const [selectedPet, setSelectedPet] = useState<any>(null);
   const [nombre, setNombre] = useState('');
-  const [especie, setEspecie] = useState('');
+  const [especie, setEspecie] = useState<string>(''); // NO null
   const [tamano, setTamano] = useState<'chica' | 'mediana' | 'grande'>('mediana');
-  const [raza, setRaza] = useState(RAZAS_PERRO[0].label);
+  const [raza, setRaza] = useState<string>(''); // en vez de string | null
   const [edad, setEdad] = useState('');
+  const [descripcion, setDescripcion] = useState('');
 
   const handleEdit = (pet: any) => {
     setSelectedPet(pet);
@@ -68,12 +71,13 @@ export default function PetsScreen({ navigation }: Props) {
     setTamano(pet.tamano);
     setRaza(pet.raza);
     setEdad(pet.edad);
+    setDescripcion(pet.descripcion);
     setEditModal(true);
   };
 
   const handleSaveEdit = () => {
     if (selectedPet && nombre.trim() && especie.trim() && tamano && raza && edad.trim()) {
-      editPet(selectedPet.id, { nombre, especie, tamano, raza, edad });
+      editPet(selectedPet.id, { nombre, especie, tamano, raza, edad, descripcion });
       setEditModal(false);
       setSelectedPet(null);
     } else {
@@ -99,19 +103,23 @@ export default function PetsScreen({ navigation }: Props) {
         data={pets}
         keyExtractor={item => item.id}
         renderItem={({ item }) => (
-          <View style={styles.petItem}>
-            <Text style={styles.petName}>{item.nombre} ({item.especie})</Text>
-            <Text style={styles.petDetails}>
-              Tamaño: {item.tamano} | Raza: {item.raza} | Edad: {item.edad}
-            </Text>
+          <View style={{ marginBottom: 6 }}>
+            <PetCard
+              nombre={item.nombre}
+              especie={item.especie}
+              tamano={item.tamano}
+              raza={item.raza}
+              edad={item.edad}
+              descripcion={item.descripcion}
+            />
             <View style={styles.row}>
-              <TouchableOpacity style={commonStyles.button} onPress={() => handleEdit(item)}>
-                <Icon name="pencil" size={20} color={colors.white} />
-                <Text style={commonStyles.buttonText}>Editar</Text>
+              <TouchableOpacity style={styles.smallButton} onPress={() => handleEdit(item)}>
+                <Icon name="pencil" size={16} color={colors.white} />
+                <Text style={styles.smallButtonText}>Editar</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={commonStyles.buttonAccent} onPress={() => handleDelete(item.id)}>
-                <Icon name="delete" size={20} color={colors.text} />
-                <Text style={commonStyles.buttonTextAccent}>Eliminar</Text>
+              <TouchableOpacity style={styles.smallButtonAccent} onPress={() => handleDelete(item.id)}>
+                <Icon name="delete" size={16} color={colors.text} />
+                <Text style={styles.smallButtonTextAccent}>Eliminar</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -127,105 +135,20 @@ export default function PetsScreen({ navigation }: Props) {
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text style={styles.title}>Editar Mascota</Text>
-
-            <Text style={styles.label}>Nombre</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Nombre de la mascota"
-              value={nombre}
-              onChangeText={setNombre}
+            <PetForm
+              nombre={nombre} setNombre={setNombre}
+              especie={especie} setEspecie={setEspecie}
+              tamano={tamano} setTamano={setTamano}
+              raza={raza} setRaza={setRaza}
+              edad={edad} setEdad={setEdad}
+              descripcion={descripcion}
+              setDescripcion={setDescripcion}
+              ESPECIES={ESPECIES}
+              TAMANOS={TAMANOS}
+              RAZAS_PERRO={RAZAS_PERRO}
+              RAZAS_GATO={RAZAS_GATO}
+              styles={styles}
             />
-
-            <Text style={styles.label}>Especie</Text>
-            <ModalSelector
-              data={ESPECIES}
-              initValue="Selecciona especie"
-              onChange={option => {
-                setEspecie(option.key as string);
-                setTamano('mediana');
-                setRaza('');
-              }}
-              selectStyle={styles.input}
-              selectTextStyle={{ color: '#22223B', fontSize: 16 }}
-            >
-              <TextInput
-                style={styles.input}
-                editable={false}
-                placeholder="Selecciona especie"
-                value={ESPECIES.find(e => e.key === especie)?.label || ''}
-                pointerEvents="none"
-              />
-            </ModalSelector>
-
-            {especie === 'Perro' && (
-              <>
-                <Text style={styles.label}>Tamaño</Text>
-                <ModalSelector
-                  data={TAMANOS}
-                  initValue="Selecciona tamaño"
-                  onChange={option => setTamano(option.key as 'chica' | 'mediana' | 'grande')}
-                  selectStyle={styles.input}
-                  selectTextStyle={{ color: '#22223B', fontSize: 16 }}
-                >
-                  <TextInput
-                    style={styles.input}
-                    editable={false}
-                    placeholder="Selecciona tamaño"
-                    value={TAMANOS.find(t => t.key === tamano)?.label || ''}
-                    pointerEvents="none"
-                  />
-                </ModalSelector>
-                <Text style={styles.label}>Raza</Text>
-                <ModalSelector
-                  data={RAZAS_PERRO}
-                  initValue="Selecciona raza"
-                  onChange={option => setRaza(option.label)}
-                  selectStyle={styles.input}
-                  selectTextStyle={{ color: '#22223B', fontSize: 16 }}
-                >
-                  <TextInput
-                    style={styles.input}
-                    editable={false}
-                    placeholder="Selecciona raza"
-                    value={raza || ''}
-                    pointerEvents="none"
-                  />
-                </ModalSelector>
-              </>
-            )}
-
-            {especie === 'Gato' && (
-              <>
-                <Text style={styles.label}>Raza</Text>
-                <ModalSelector
-                  data={RAZAS_GATO}
-                  initValue="Selecciona raza"
-                  onChange={option => setRaza(option.label)}
-                  selectStyle={styles.input}
-                  selectTextStyle={{ color: '#22223B', fontSize: 16 }}
-                >
-                  <TextInput
-                    style={styles.input}
-                    editable={false}
-                    placeholder="Selecciona raza"
-                    value={raza || ''}
-                    pointerEvents="none"
-                  />
-                </ModalSelector>
-              </>
-            )}
-
-            <Text style={styles.label}>Edad</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Edad (en años)"
-              value={edad}
-              onChangeText={setEdad}
-              keyboardType="numeric"
-              returnKeyType="done"
-              onSubmitEditing={() => Keyboard.dismiss()}
-            />
-
             <TouchableOpacity style={styles.button} onPress={handleSaveEdit}>
               <Text style={styles.buttonText}>Guardar</Text>
             </TouchableOpacity>
@@ -276,4 +199,33 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   buttonText: { color: colors.white, fontWeight: 'bold', fontSize: 16 },
+  smallButton: {
+    backgroundColor: colors.primary,
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 8,
+  },
+  smallButtonText: {
+    color: colors.white,
+    fontWeight: 'bold',
+    fontSize: 14,
+    marginLeft: 4,
+  },
+  smallButtonAccent: {
+    backgroundColor: '#FF6B6B',
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  smallButtonTextAccent: {
+    color: colors.text,
+    fontWeight: 'bold',
+    fontSize: 14,
+    marginLeft: 4,
+  },
 });

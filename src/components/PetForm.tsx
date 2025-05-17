@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, TextInput } from 'react-native';
 import ModalSelector from 'react-native-modal-selector';
 
@@ -7,12 +7,14 @@ type Props = {
   setNombre: (v: string) => void;
   especie: string;
   setEspecie: (v: string) => void;
-  tamano: string;
-  setTamano: (v: string) => void;
+  tamano: 'chica' | 'mediana' | 'grande';
+  setTamano: (v: 'chica' | 'mediana' | 'grande') => void;
   raza: string;
   setRaza: (v: string) => void;
   edad: string;
   setEdad: (v: string) => void;
+  descripcion: string;
+  setDescripcion: (v: string) => void;
   ESPECIES: { key: string; label: string }[];
   TAMANOS: { key: string; label: string }[];
   RAZAS_PERRO: { key: number; label: string }[];
@@ -26,6 +28,7 @@ export default function PetForm({
   tamano, setTamano,
   raza, setRaza,
   edad, setEdad,
+  descripcion, setDescripcion,
   ESPECIES, TAMANOS, RAZAS_PERRO, RAZAS_GATO,
   styles
 }: Props) {
@@ -66,7 +69,7 @@ export default function PetForm({
           <ModalSelector
             data={TAMANOS}
             initValue="Selecciona tamaño"
-            onChange={option => setTamano(option.key as string)}
+            onChange={option => setTamano(option.key as 'chica' | 'mediana' | 'grande')}
             selectStyle={styles.input}
             selectTextStyle={{ color: '#22223B', fontSize: 16 }}
           >
@@ -126,6 +129,15 @@ export default function PetForm({
         onChangeText={setEdad}
         keyboardType="numeric"
         returnKeyType="done"
+      />
+
+      <Text style={styles.label}>Descripción</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Descripción breve de la mascota"
+        value={descripcion}
+        onChangeText={setDescripcion}
+        maxLength={40}
       />
     </>
   );
