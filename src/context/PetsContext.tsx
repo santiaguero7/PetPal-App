@@ -8,7 +8,6 @@ type Pet = {
   tamano: 'chica' | 'mediana' | 'grande';
   raza: string;
   edad: string;
-  color: string;
 };
 
 type PetsContextType = {
@@ -30,7 +29,6 @@ export const PetsProvider: React.FC<{ children: React.ReactNode }> = ({ children
       tamano: 'grande',
       raza: 'Labrador',
       edad: '5',
-      color: 'Marrón',
     },
     {
       id: '2',
@@ -39,7 +37,6 @@ export const PetsProvider: React.FC<{ children: React.ReactNode }> = ({ children
       tamano: 'chica',
       raza: 'Sin especificar',
       edad: '2',
-      color: 'Blanco',
     },
   ]);
 
@@ -72,3 +69,17 @@ export const usePets = () => {
   if (!context) throw new Error('Usar dentro de PetsProvider');
   return context;
 };
+
+const RAZAS_GATO = [
+  { key: 0, label: 'Sin especificar' },
+  { key: 1, label: 'Persa' },
+  { key: 2, label: 'Siamés' },
+  { key: 3, label: 'Maine Coon' },
+  { key: 4, label: 'Bengala' },
+  { key: 5, label: 'Siberiano' },
+  { key: 6, label: 'Ragdoll' },
+  { key: 7, label: 'British Shorthair' },
+  { key: 8, label: 'Sphynx' },
+  { key: 9, label: 'Abisinio' },
+  { key: 10, label: 'Otro' }
+];
