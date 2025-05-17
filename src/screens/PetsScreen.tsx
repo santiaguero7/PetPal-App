@@ -149,10 +149,11 @@ export default function PetsScreen({ navigation }: Props) {
               selectTextStyle={{ color: '#22223B', fontSize: 16 }}
             >
               <TextInput
-                style={{ color: '#22223B', fontSize: 16, backgroundColor: 'transparent', padding: 0, margin: 0 }}
+                style={styles.input}
                 editable={false}
                 placeholder="Selecciona especie"
-                value={especie || ''}
+                value={ESPECIES.find(e => e.key === especie)?.label || ''}
+                pointerEvents="none"
               />
             </ModalSelector>
 
@@ -167,10 +168,11 @@ export default function PetsScreen({ navigation }: Props) {
                   selectTextStyle={{ color: '#22223B', fontSize: 16 }}
                 >
                   <TextInput
-                    style={{ color: '#22223B', fontSize: 16, backgroundColor: 'transparent', padding: 0, margin: 0 }}
+                    style={styles.input}
                     editable={false}
                     placeholder="Selecciona tamaño"
                     value={TAMANOS.find(t => t.key === tamano)?.label || ''}
+                    pointerEvents="none"
                   />
                 </ModalSelector>
                 <Text style={styles.label}>Raza</Text>
@@ -182,10 +184,11 @@ export default function PetsScreen({ navigation }: Props) {
                   selectTextStyle={{ color: '#22223B', fontSize: 16 }}
                 >
                   <TextInput
-                    style={{ color: '#22223B', fontSize: 16, backgroundColor: 'transparent', padding: 0, margin: 0 }}
+                    style={styles.input}
                     editable={false}
                     placeholder="Selecciona raza"
                     value={raza || ''}
+                    pointerEvents="none"
                   />
                 </ModalSelector>
               </>
@@ -202,10 +205,11 @@ export default function PetsScreen({ navigation }: Props) {
                   selectTextStyle={{ color: '#22223B', fontSize: 16 }}
                 >
                   <TextInput
-                    style={{ color: '#22223B', fontSize: 16, backgroundColor: 'transparent', padding: 0, margin: 0 }}
+                    style={styles.input}
                     editable={false}
                     placeholder="Selecciona raza"
                     value={raza || ''}
+                    pointerEvents="none"
                   />
                 </ModalSelector>
               </>

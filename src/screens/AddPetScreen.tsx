@@ -5,6 +5,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation';
 import { usePets } from '../context/PetsContext';
 import { colors } from '../themes/colors';
+import PetForm from '../components/PetForm';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AddPet'>;
 
@@ -83,93 +84,17 @@ export default function AddPetScreen({ navigation }: Props) {
     >
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.title}>Agregar Mascota</Text>
-        <Text style={styles.label}>Nombre</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Nombre de la mascota"
-          value={nombre}
-          onChangeText={setNombre}
-        />
-        <Text style={styles.label}>Especie</Text>
-        <ModalSelector
-          data={ESPECIES}
-          initValue="Selecciona especie"
-          onChange={option => setEspecie(option.key as string)}
-          style={styles.selector}
-          selectStyle={styles.selectorButton}
-          selectTextStyle={styles.selectorText}
-        >
-          <TextInput
-            style={styles.input}
-            editable={false}
-            placeholder="Selecciona especie"
-            value={especie || ''}
-          />
-        </ModalSelector>
-        {especie === 'Perro' && (
-          <>
-            <Text style={styles.label}>Tamaño</Text>
-            <ModalSelector
-              data={TAMANOS}
-              initValue="Selecciona tamaño"
-              onChange={option => setTamano(option.key as string)}
-              style={styles.selector}
-              selectStyle={styles.selectorButton}
-              selectTextStyle={styles.selectorText}
-            >
-              <TextInput
-                style={styles.input}
-                editable={false}
-                placeholder="Selecciona tamaño"
-                value={tamano || ''}
-              />
-            </ModalSelector>
-            <Text style={styles.label}>Raza</Text>
-            <ModalSelector
-              data={RAZAS_PERRO}
-              initValue="Selecciona raza"
-              onChange={option => setRaza(option.label)}
-              style={styles.selector}
-              selectStyle={styles.selectorButton}
-              selectTextStyle={styles.selectorText}
-            >
-              <TextInput
-                style={styles.input}
-                editable={false}
-                placeholder="Selecciona raza"
-                value={raza || ''}
-              />
-            </ModalSelector>
-          </>
-        )}
-        {especie === 'Gato' && (
-          <>
-            <Text style={styles.label}>Raza</Text>
-            <ModalSelector
-              data={RAZAS_GATO}
-              initValue="Selecciona raza"
-              onChange={option => setRaza(option.label)}
-              style={styles.selector}
-              selectStyle={styles.selectorButton}
-              selectTextStyle={styles.selectorText}
-            >
-              <TextInput
-                style={styles.input}
-                editable={false}
-                placeholder="Selecciona raza"
-                value={raza || ''}
-              />
-            </ModalSelector>
-          </>
-        )}
-        <Text style={styles.label}>Edad</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Edad (en años)"
-          value={edad}
-          onChangeText={setEdad}
-          keyboardType="numeric"
-          returnKeyType="done"
+        <PetForm
+          nombre={nombre} setNombre={setNombre}
+          especie={especie} setEspecie={setEspecie}
+          tamano={tamano} setTamano={setTamano}
+          raza={raza} setRaza={setRaza}
+          edad={edad} setEdad={setEdad}
+          ESPECIES={ESPECIES}
+          TAMANOS={TAMANOS}
+          RAZAS_PERRO={RAZAS_PERRO}
+          RAZAS_GATO={RAZAS_GATO}
+          styles={styles}
         />
         <Button title="Guardar" onPress={handleAddPet} />
       </ScrollView>
