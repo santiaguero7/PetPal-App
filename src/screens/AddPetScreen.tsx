@@ -4,6 +4,7 @@ import ModalSelector from 'react-native-modal-selector';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation';
 import { usePets } from '../context/PetsContext';
+import { colors } from '../themes/colors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AddPet'>;
 
@@ -177,11 +178,33 @@ export default function AddPetScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 16 },
-  title: { fontSize: 24, marginBottom: 16, textAlign: 'center' },
-  label: { fontWeight: 'bold', marginTop: 16, marginBottom: 4 },
-  input: { borderWidth: 1, borderColor: '#ccc', padding: 8, borderRadius: 4, marginBottom: 8, backgroundColor: '#fff' },
+  container: { flex: 1, backgroundColor: '#E3F6FC', justifyContent: 'center', padding: 16 },
+  title: { fontSize: 32, color: '#6EC1E4', fontWeight: 'bold', textAlign: 'center', marginBottom: 24 },
+  label: { fontWeight: 'bold', marginTop: 16, marginBottom: 4, color: '#22223B' },
+  input: { 
+    backgroundColor: '#fff', 
+    borderRadius: 8, 
+    padding: 12, 
+    marginBottom: 8, 
+    fontSize: 16, 
+    color: '#22223B', 
+    borderWidth: 1, 
+    borderColor: '#6EC1E4' 
+  },
+  button: { 
+    backgroundColor: '#6EC1E4', 
+    borderRadius: 8, 
+    padding: 12, 
+    marginVertical: 8, 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'center' 
+  },
+  buttonText: { color: '#fff', fontSize: 18, fontWeight: 'bold', textAlign: 'center', marginLeft: 8 },
+  fotoPicker: { alignItems: 'center', marginVertical: 16 },
+  fotoMascota: { width: 100, height: 100, borderRadius: 50, marginBottom: 8 },
+  fotoText: { color: '#6EC1E4', fontWeight: 'bold' },
   selector: { marginBottom: 8 },
-  selectorButton: { borderWidth: 1, borderColor: '#ccc', borderRadius: 4, backgroundColor: '#fff' },
-  selectorText: { color: '#333', fontSize: 16 },
+  selectorButton: { borderWidth: 1, borderColor: '#6EC1E4', borderRadius: 4, backgroundColor: '#fff' },
+  selectorText: { color: '#22223B', fontSize: 16 },
 });

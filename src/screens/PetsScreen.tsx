@@ -1,9 +1,22 @@
 import React, { useState } from 'react';
-import { View, Text, Button, FlatList, StyleSheet, Alert, Modal, TextInput, Keyboard } from 'react-native';
-import ModalSelector from 'react-native-modal-selector';
-import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import type { RootStackParamList } from '../navigation';
+import { View, Text, FlatList, StyleSheet, Alert, Modal, TextInput, Keyboard, TouchableOpacity } from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { colors } from '../themes/colors';
+import { commonStyles } from '../themes/commonStyles';
 import { usePets } from '../context/PetsContext';
+import ModalSelector from 'react-native-modal-selector';
+
+const ESPECIES = [
+  { key: 'Perro', label: 'Perro' },
+  { key: 'Gato', label: 'Gato' },
+  { key: 'Otro', label: 'Otro' }
+];
+
+const TAMANOS = [
+  { key: 'chica', label: 'Chica' },
+  { key: 'mediana', label: 'Mediana' },
+  { key: 'grande', label: 'Grande' }
+];
 
 const RAZAS_PERRO = [
   { key: 0, label: 'Sin especificar' },
@@ -33,17 +46,8 @@ const RAZAS_GATO = [
   { key: 10, label: 'Otro' }
 ];
 
-const ESPECIES = [
-  { key: 'Perro', label: 'Perro' },
-  { key: 'Gato', label: 'Gato' },
-  { key: 'Otro', label: 'Otro' }
-];
-
-const TAMANOS = [
-  { key: 'chica', label: 'Chica' },
-  { key: 'mediana', label: 'Mediana' },
-  { key: 'grande', label: 'Grande' }
-];
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { RootStackParamList } from '../navigation';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Pets'>;
 
@@ -52,9 +56,9 @@ export default function PetsScreen({ navigation }: Props) {
   const [editModal, setEditModal] = useState(false);
   const [selectedPet, setSelectedPet] = useState<any>(null);
   const [nombre, setNombre] = useState('');
-  const [especie, setEspecie] = useState<string | null>(null);
-  const [tamano, setTamano] = useState<string | null>(null);
-  const [raza, setRaza] = useState<string | null>(null);
+  const [especie, setEspecie] = useState('');
+  const [tamano, setTamano] = useState<'chica' | 'mediana' | 'grande'>('mediana');
+  const [raza, setRaza] = useState(RAZAS_PERRO[0].label);
   const [edad, setEdad] = useState('');
 
   const handleEdit = (pet: any) => {
@@ -68,20 +72,8 @@ export default function PetsScreen({ navigation }: Props) {
   };
 
   const handleSaveEdit = () => {
-    if (
-      selectedPet &&
-      nombre.trim() &&
-      especie &&
-      edad.trim() &&
-      (especie !== 'Perro' || (tamano && raza))
-    ) {
-      editPet(selectedPet.id, {
-        nombre,
-        especie,
-        tamano: especie === 'Perro' ? (tamano as 'chica' | 'mediana' | 'grande') : 'mediana',
-        raza: especie === 'Perro' ? (raza || '') : '',
-        edad,
-      });
+    if (selectedPet && nombre.trim() && especie.trim() && tamano && raza && edad.trim()) {
+      editPet(selectedPet.id, { nombre, especie, tamano, raza, edad });
       setEditModal(false);
       setSelectedPet(null);
     } else {
@@ -102,7 +94,7 @@ export default function PetsScreen({ navigation }: Props) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Mis Mascotas</Text>
+      <Text style={commonStyles.title}>Mis Mascotas</Text>
       <FlatList
         data={pets}
         keyExtractor={item => item.id}
@@ -113,58 +105,72 @@ export default function PetsScreen({ navigation }: Props) {
               Tamaño: {item.tamano} | Raza: {item.raza} | Edad: {item.edad}
             </Text>
             <View style={styles.row}>
-              <Button title="Editar" onPress={() => handleEdit(item)} />
-              <Button title="Eliminar" color="red" onPress={() => handleDelete(item.id)} />
+              <TouchableOpacity style={commonStyles.button} onPress={() => handleEdit(item)}>
+                <Icon name="pencil" size={20} color={colors.white} />
+                <Text style={commonStyles.buttonText}>Editar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={commonStyles.buttonAccent} onPress={() => handleDelete(item.id)}>
+                <Icon name="delete" size={20} color={colors.text} />
+                <Text style={commonStyles.buttonTextAccent}>Eliminar</Text>
+              </TouchableOpacity>
             </View>
           </View>
         )}
       />
-      <Button title="Agregar Mascota" onPress={() => navigation.navigate('AddPet')} />
+      <TouchableOpacity style={commonStyles.button} onPress={() => navigation.navigate('AddPet')}>
+        <Icon name="plus" size={24} color={colors.white} />
+        <Text style={commonStyles.buttonText}>Agregar Mascota</Text>
+      </TouchableOpacity>
 
       {/* Modal de edición */}
       <Modal visible={editModal} animationType="slide" transparent>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text style={styles.title}>Editar Mascota</Text>
+
             <Text style={styles.label}>Nombre</Text>
             <TextInput
               style={styles.input}
-              placeholder="Nombre"
+              placeholder="Nombre de la mascota"
               value={nombre}
               onChangeText={setNombre}
             />
+
             <Text style={styles.label}>Especie</Text>
             <ModalSelector
               data={ESPECIES}
               initValue="Selecciona especie"
-              onChange={option => setEspecie(option.key as string)}
-              style={styles.selector}
-              selectStyle={styles.selectorButton}
-              selectTextStyle={styles.selectorText}
+              onChange={option => {
+                setEspecie(option.key as string);
+                setTamano('mediana');
+                setRaza('');
+              }}
+              selectStyle={styles.input}
+              selectTextStyle={{ color: '#22223B', fontSize: 16 }}
             >
               <TextInput
-                style={styles.input}
+                style={{ color: '#22223B', fontSize: 16, backgroundColor: 'transparent', padding: 0, margin: 0 }}
                 editable={false}
                 placeholder="Selecciona especie"
                 value={especie || ''}
               />
             </ModalSelector>
+
             {especie === 'Perro' && (
               <>
                 <Text style={styles.label}>Tamaño</Text>
                 <ModalSelector
                   data={TAMANOS}
                   initValue="Selecciona tamaño"
-                  onChange={option => setTamano(option.key as string)}
-                  style={styles.selector}
-                  selectStyle={styles.selectorButton}
-                  selectTextStyle={styles.selectorText}
+                  onChange={option => setTamano(option.key as 'chica' | 'mediana' | 'grande')}
+                  selectStyle={styles.input}
+                  selectTextStyle={{ color: '#22223B', fontSize: 16 }}
                 >
                   <TextInput
-                    style={styles.input}
+                    style={{ color: '#22223B', fontSize: 16, backgroundColor: 'transparent', padding: 0, margin: 0 }}
                     editable={false}
                     placeholder="Selecciona tamaño"
-                    value={tamano || ''}
+                    value={TAMANOS.find(t => t.key === tamano)?.label || ''}
                   />
                 </ModalSelector>
                 <Text style={styles.label}>Raza</Text>
@@ -172,12 +178,11 @@ export default function PetsScreen({ navigation }: Props) {
                   data={RAZAS_PERRO}
                   initValue="Selecciona raza"
                   onChange={option => setRaza(option.label)}
-                  style={styles.selector}
-                  selectStyle={styles.selectorButton}
-                  selectTextStyle={styles.selectorText}
+                  selectStyle={styles.input}
+                  selectTextStyle={{ color: '#22223B', fontSize: 16 }}
                 >
                   <TextInput
-                    style={styles.input}
+                    style={{ color: '#22223B', fontSize: 16, backgroundColor: 'transparent', padding: 0, margin: 0 }}
                     editable={false}
                     placeholder="Selecciona raza"
                     value={raza || ''}
@@ -185,6 +190,7 @@ export default function PetsScreen({ navigation }: Props) {
                 </ModalSelector>
               </>
             )}
+
             {especie === 'Gato' && (
               <>
                 <Text style={styles.label}>Raza</Text>
@@ -192,12 +198,11 @@ export default function PetsScreen({ navigation }: Props) {
                   data={RAZAS_GATO}
                   initValue="Selecciona raza"
                   onChange={option => setRaza(option.label)}
-                  style={styles.selector}
-                  selectStyle={styles.selectorButton}
-                  selectTextStyle={styles.selectorText}
+                  selectStyle={styles.input}
+                  selectTextStyle={{ color: '#22223B', fontSize: 16 }}
                 >
                   <TextInput
-                    style={styles.input}
+                    style={{ color: '#22223B', fontSize: 16, backgroundColor: 'transparent', padding: 0, margin: 0 }}
                     editable={false}
                     placeholder="Selecciona raza"
                     value={raza || ''}
@@ -205,6 +210,7 @@ export default function PetsScreen({ navigation }: Props) {
                 </ModalSelector>
               </>
             )}
+
             <Text style={styles.label}>Edad</Text>
             <TextInput
               style={styles.input}
@@ -215,8 +221,13 @@ export default function PetsScreen({ navigation }: Props) {
               returnKeyType="done"
               onSubmitEditing={() => Keyboard.dismiss()}
             />
-            <Button title="Guardar" onPress={handleSaveEdit} />
-            <Button title="Cancelar" color="red" onPress={() => setEditModal(false)} />
+
+            <TouchableOpacity style={styles.button} onPress={handleSaveEdit}>
+              <Text style={styles.buttonText}>Guardar</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.button, { backgroundColor: '#FFD166' }]} onPress={() => setEditModal(false)}>
+              <Text style={[styles.buttonText, { color: '#22223B' }]}>Cancelar</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -225,17 +236,40 @@ export default function PetsScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16 },
-  title: { fontSize: 24, marginBottom: 16, textAlign: 'center' },
-  petItem: { padding: 12, borderBottomWidth: 1, borderColor: '#eee' },
-  petName: { fontWeight: 'bold', fontSize: 16 },
+  container: { flex: 1, backgroundColor: colors.background, padding: 16 },
+  petItem: { padding: 12, borderBottomWidth: 1, borderColor: '#eee', marginBottom: 8, backgroundColor: colors.card, borderRadius: 12 },
+  petName: { fontWeight: 'bold', fontSize: 16, color: colors.text },
   petDetails: { fontSize: 14, color: '#555', marginBottom: 4 },
   row: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 },
   modalContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#00000099' },
-  modalContent: { backgroundColor: '#fff', padding: 20, borderRadius: 8, width: '80%' },
-  input: { borderWidth: 1, borderColor: '#ccc', padding: 8, marginBottom: 8, borderRadius: 4, backgroundColor: '#fff' },
-  selector: { marginBottom: 8 },
-  selectorButton: { borderWidth: 1, borderColor: '#ccc', borderRadius: 4, backgroundColor: '#fff' },
-  selectorText: { color: '#333', fontSize: 16 },
-  label: { fontWeight: 'bold', marginTop: 16, marginBottom: 4 },
+  modalContent: { backgroundColor: '#fff', padding: 20, borderRadius: 16, width: '90%' },
+  input: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 8,
+    fontSize: 16,
+    color: '#22223B',
+    borderWidth: 1,
+    borderColor: '#6EC1E4',
+    width: '100%',
+    alignSelf: 'stretch',
+  },
+  title: { fontSize: 18, fontWeight: 'bold', marginBottom: 16, textAlign: 'center' },
+  label: {
+    color: '#22223B',
+    fontFamily: 'Baloo2-Bold',
+    fontSize: 15,
+    paddingLeft: 4,
+    paddingBottom: 2,
+    marginTop: 10,
+  },
+  button: {
+    backgroundColor: colors.primary,
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  buttonText: { color: colors.white, fontWeight: 'bold', fontSize: 16 },
 });

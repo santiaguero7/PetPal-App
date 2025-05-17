@@ -1,87 +1,85 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Keyboard } from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { colors } from '../themes/colors';
+import { commonStyles } from '../themes/commonStyles';
 
-export default function RegisterScreen() {
-  // Estados para almacenar los datos del formulario
-  const [nombre, setNombre] = useState(''); // Nombre completo del usuario
-  const [email, setEmail] = useState(''); // Correo electrónico
-  const [password, setPassword] = useState(''); // Contraseña (se muestra oculta)
-  const [tipo, setTipo] = useState('cuidador'); // Tipo de usuario (cuidador/paseador)
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { RootStackParamList } from '../navigation';
 
-  // Función que maneja el envío del formulario
+type Props = NativeStackScreenProps<RootStackParamList, 'Register'>;
+
+export default function RegisterScreen({ navigation }: Props) {
+  const [email, setEmail] = useState('');
+  const [nombre, setNombre] = useState('');
+  const [password, setPassword] = useState('');
+  const [repeatPassword, setRepeatPassword] = useState('');
+
   const handleRegister = () => {
-    // (Futura implementación: validación y envío de datos al servidor)
-    console.log('Datos a registrar:', { nombre, email, password, tipo });
+    if (!email.trim() || !nombre.trim() || !password.trim() || !repeatPassword.trim()) {
+      Alert.alert('Error', 'Completa todos los campos');
+      return;
+    }
+    if (password !== repeatPassword) {
+      Alert.alert('Error', 'Las contraseñas no coinciden');
+      return;
+    }
+    // Aquí iría tu lógica de registro
+    navigation.replace('Login');
   };
 
   return (
-    <ScrollView 
-      contentContainerStyle={styles.container} // Permite hacer scroll en pantallas pequeñas
-      keyboardShouldPersistTaps="handled" // Mejor manejo del teclado en iOS/Android
-    >
-      {/* Título del formulario */}
-      <Text style={styles.title}>Registro</Text>
-
-      {/* Campo para nombre completo */}
-      <TextInput 
-        style={styles.input}
+    <View style={styles.container}>
+      <Icon name="paw" size={48} color={colors.primary} style={{ alignSelf: 'center', marginBottom: 8 }} />
+      <Text style={commonStyles.title}>Crear cuenta</Text>
+      <TextInput
+        style={commonStyles.input}
         placeholder="Nombre"
         value={nombre}
         onChangeText={setNombre}
+        placeholderTextColor="#888"
       />
-
-      {/* Campo para email con teclado especializado */}
       <TextInput
-        style={styles.input}
-        placeholder="Correo"
+        style={commonStyles.input}
+        placeholder="Ingresá tu correo"
         value={email}
         onChangeText={setEmail}
-        keyboardType="email-address" // Muestra teclado optimizado para emails
-        autoCapitalize="none" // Evita mayúsculas automáticas
+        keyboardType="email-address"
+        autoCapitalize="none"
+        placeholderTextColor="#888"
+        returnKeyType="done"
+        onSubmitEditing={() => Keyboard.dismiss()}
       />
-
-      {/* Campo para contraseña (texto oculto) */}
       <TextInput
-        style={styles.input}
-        placeholder="Contraseña"
+        style={commonStyles.input}
+        placeholder="Ingresá tu contraseña"
         value={password}
         onChangeText={setPassword}
-        secureTextEntry // Oculta los caracteres
+        secureTextEntry
+        placeholderTextColor="#888"
+        returnKeyType="done"
+        onSubmitEditing={() => Keyboard.dismiss()}
       />
-
-      {/* Campo para seleccionar tipo de usuario */}
       <TextInput
-        style={styles.input}
-        placeholder="Tipo (cuidador/paseador)"
-        value={tipo}
-        onChangeText={setTipo}
+        style={commonStyles.input}
+        placeholder="Repetir contraseña"
+        value={repeatPassword}
+        onChangeText={setRepeatPassword}
+        secureTextEntry
+        placeholderTextColor="#888"
       />
-
-      {/* Botón de registro */}
-      <Button 
-        title="Registrarse" 
-        onPress={handleRegister} 
-      />
-    </ScrollView>
+      <TouchableOpacity style={commonStyles.button} onPress={handleRegister}>
+        <Icon name="account-plus" size={24} color={colors.white} />
+        <Text style={commonStyles.buttonText}>Registrarme</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={commonStyles.buttonAccent} onPress={() => navigation.goBack()}>
+        <Icon name="arrow-left" size={24} color={colors.text} />
+        <Text style={commonStyles.buttonTextAccent}>Volver</Text>
+      </TouchableOpacity>
+    </View>
   );
 }
 
-// Estilos del componente
 const styles = StyleSheet.create({
-  container: { 
-    flexGrow: 1, 
-    justifyContent: 'center', 
-  },
-  title: {
-    fontSize: 24,
-    marginBottom: 16, 
-    textAlign: 'center' 
-  },
-  input: {
-    borderWidth: 1, 
-    borderColor: '#ccc', 
-    padding: 8, 
-    marginBottom: 12,
-    borderRadius: 4
-  }
+  container: { flex: 1, backgroundColor: colors.background, justifyContent: 'center', padding: 16 },
 });
