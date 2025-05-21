@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, Button, StyleSheet, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Alert, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity } from 'react-native';
 import PetForm from '../components/PetForm';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation';
@@ -99,40 +99,41 @@ export default function AddPetScreen({ navigation }: Props) {
           RAZAS_GATO={RAZAS_GATO}
           styles={styles}
         />
-        <Button title="Guardar" onPress={handleAddPet} />
+        <TouchableOpacity style={styles.button} onPress={handleAddPet}>
+          <Text style={styles.buttonText}>Guardar</Text>
+        </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#E3F6FC', justifyContent: 'center', padding: 16 },
-  title: { fontSize: 32, color: '#6EC1E4', fontWeight: 'bold', textAlign: 'center', marginBottom: 24 },
+  container: { flexGrow: 1, backgroundColor: '#F6FFF8', justifyContent: 'center', padding: 18 },
+  title: { fontSize: 26, color: '#219653', fontWeight: 'bold', textAlign: 'center', marginBottom: 24 },
   label: { fontWeight: 'bold', marginTop: 16, marginBottom: 4, color: '#22223B' },
-  input: { 
-    backgroundColor: '#fff', 
-    borderRadius: 8, 
-    padding: 12, 
-    marginBottom: 8, 
-    fontSize: 16, 
-    color: '#22223B', 
-    borderWidth: 1, 
-    borderColor: '#6EC1E4' 
+  input: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 8,
+    fontSize: 16,
+    color: '#22223B',
+    borderWidth: 1,
+    borderColor: '#6FCF97'
   },
-  button: { 
-    backgroundColor: '#6EC1E4', 
-    borderRadius: 8, 
-    padding: 12, 
-    marginVertical: 8, 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    justifyContent: 'center' 
+  button: {
+    backgroundColor: '#6FCF97',
+    borderRadius: 20,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginTop: 16,
+    marginBottom: 24
   },
-  buttonText: { color: '#fff', fontSize: 18, fontWeight: 'bold', textAlign: 'center', marginLeft: 8 },
+  buttonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
   fotoPicker: { alignItems: 'center', marginVertical: 16 },
   fotoMascota: { width: 100, height: 100, borderRadius: 50, marginBottom: 8 },
-  fotoText: { color: '#6EC1E4', fontWeight: 'bold' },
+  fotoText: { color: '#6FCF97', fontWeight: 'bold' },
   selector: { marginBottom: 8 },
-  selectorButton: { borderWidth: 1, borderColor: '#6EC1E4', borderRadius: 4, backgroundColor: '#fff' },
+  selectorButton: { borderWidth: 1, borderColor: '#6FCF97', borderRadius: 8, backgroundColor: '#fff', padding: 10 },
   selectorText: { color: '#22223B', fontSize: 16 },
 });

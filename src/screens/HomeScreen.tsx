@@ -1,108 +1,118 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, FlatList } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../navigation';
 import { colors } from '../themes/colors';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-// Define el tipo para las props de navegación específicas de la pantalla Home
-type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
+// Simula datos de cuidadores cercanos
+const caretakers = [
+  { id: 1, nombre: 'Ana López', experiencia: '3 años', distancia: '1.2 km' },
+  { id: 2, nombre: 'Carlos Ruiz', experiencia: '5 años', distancia: '2.5 km' },
+  { id: 3, nombre: 'María Gómez', experiencia: '2 años', distancia: '3.1 km' },
+];
 
-// Tipo para las props del componente
-type Props = {
-  navigation: HomeScreenNavigationProp;
+import type { StackNavigationProp } from '@react-navigation/stack';
+
+type RootStackParamList = {
+  Home: undefined;
+  Buscar: undefined;
+  Servicios: undefined;
+  // add other routes here if needed
 };
 
-export default function HomeScreen({ navigation }: Props) {
+type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Home'>;
+
+interface HomeScreenProps {
+  navigation: HomeScreenNavigationProp;
+}
+
+export default function HomeScreen({ navigation }: HomeScreenProps) {
   return (
-    <View style={styles.container}>
-      <Icon name="paw" size={60} color="#6EC1E4" style={{ alignSelf: 'center', marginBottom: 8 }} />
-      <Text style={styles.title}>¡Bienvenido a PetPal!</Text>
-      <Text style={styles.subtitle}>Tu espacio para cuidar y mimar a tus mascotas</Text>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['top']}>
+      <ScrollView style={styles.container}>
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.title}>PetPal</Text>
+            <Text style={styles.subtitle}>Cuida a tus amigos peludos</Text>
+          </View>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>SA</Text>
+          </View>
+        </View>
 
-      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Profile')}>
-        <Icon name="account" size={24} color="#fff" />
-        <Text style={styles.buttonText}>Mi Perfil</Text>
-      </TouchableOpacity>
+        <View style={styles.banner}>
+          <Text style={styles.bannerTitle}>¿Necesitas un cuidador?</Text>
+          <Text style={styles.bannerText}>
+            Conecta con amantes de mascotas cerca de ti que cuidarán a tus mascotas como familia.
+          </Text>
+          <TouchableOpacity
+            style={styles.bannerButton}
+            onPress={() => navigation.navigate('Buscar')}
+          >
+            <Text style={styles.bannerButtonText}>Buscar cuidadores</Text>
+          </TouchableOpacity>
+        </View>
 
-      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Pets')}>
-        <Icon name="dog" size={24} color="#fff" />
-        <Text style={styles.buttonText}>Mis Mascotas</Text>
-      </TouchableOpacity>
+        <Text style={styles.sectionTitle}>Servicios</Text>
+        <View style={styles.servicesRow}>
+          <TouchableOpacity style={styles.serviceCard} onPress={() => navigation.navigate('Servicios')}>
+            <Icon name="dog" size={28} color={colors.primary} />
+            <Text style={styles.serviceTitle}>Paseo de perros</Text>
+            <Text style={styles.serviceDesc}>Paseos programados</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.serviceCard} onPress={() => navigation.navigate('Servicios')}>
+            <Icon name="home-heart" size={28} color={colors.primary} />
+            <Text style={styles.serviceTitle}>Cuidado en casa</Text>
+            <Text style={styles.serviceDesc}>Cuida tu mascota en casa</Text>
+          </TouchableOpacity>
+        </View>
 
-      <TouchableOpacity
-        style={styles.buttonAccent}
-        onPress={() =>
-          Alert.alert('Cerrar sesión', '¿Estás seguro que deseas salir?', [
-            { text: 'Cancelar', style: 'cancel' },
-            { text: 'Salir', style: 'destructive', onPress: () => navigation.replace('Login') },
-          ])
-        }
-      >
-        <Icon name="logout" size={24} color="#22223B" />
-        <Text style={styles.buttonTextAccent}>Cerrar Sesión</Text>
-      </TouchableOpacity>
-    </View>
+        <View style={styles.rowBetween}>
+          <Text style={styles.sectionTitle}>Cuidadores cercanos</Text>
+          <TouchableOpacity onPress={() => navigation.navigate('Buscar')}>
+            <Text style={styles.link}>Ver todos</Text>
+          </TouchableOpacity>
+        </View>
+        <View>
+          {caretakers.slice(0, 3).map((c) => (
+            <TouchableOpacity
+              key={c.id}
+              style={styles.caretakerCard}
+              onPress={() => navigation.navigate('Buscar')}
+            >
+              <Icon name="account" size={32} color={colors.primary} style={{ marginRight: 12 }} />
+              <View>
+                <Text style={styles.caretakerName}>{c.nombre}</Text>
+                <Text style={styles.caretakerInfo}>{c.experiencia} • {c.distancia}</Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#E3F6FC', justifyContent: 'center', padding: 24 },
-  title: {
-    fontSize: 36,
-    color: '#6EC1E4',
-    fontFamily: 'Baloo2-Bold',
-    textAlign: 'center',
-    marginBottom: 8,
-    letterSpacing: 1,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#22223B',
-    textAlign: 'center',
-    marginBottom: 32,
-    fontFamily: 'Baloo2-Regular',
-  },
-  button: {
-    backgroundColor: '#6EC1E4',
-    borderRadius: 10,
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    marginVertical: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    elevation: 2,
-    shadowColor: '#6EC1E4',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 20,
-    fontFamily: 'Baloo2-Bold',
-    marginLeft: 10,
-  },
-  buttonAccent: {
-    backgroundColor: '#FFD166',
-    borderRadius: 10,
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    marginVertical: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    elevation: 2,
-    shadowColor: '#FFD166',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-  },
-  buttonTextAccent: {
-    color: '#22223B',
-    fontSize: 20,
-    fontFamily: 'Baloo2-Bold',
-    marginLeft: 10,
-  },
+  container: { flex: 1, backgroundColor: '#F6FFF8', padding: 18 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 },
+  title: { fontSize: 28, fontWeight: 'bold', color: '#22223B' },
+  subtitle: { color: '#6FCF97', fontSize: 15 },
+  avatar: { height: 48, width: 48, borderRadius: 24, backgroundColor: '#D1FADF', alignItems: 'center', justifyContent: 'center' },
+  avatarText: { color: '#219653', fontWeight: 'bold', fontSize: 18 },
+  banner: { backgroundColor: '#6FCF97', borderRadius: 18, padding: 18, marginBottom: 18 },
+  bannerTitle: { color: '#fff', fontSize: 20, fontWeight: 'bold', marginBottom: 6 },
+  bannerText: { color: '#fff', marginBottom: 10 },
+  bannerButton: { backgroundColor: '#fff', borderRadius: 20, paddingVertical: 8, paddingHorizontal: 18, alignSelf: 'flex-start' },
+  bannerButtonText: { color: '#219653', fontWeight: 'bold' },
+  sectionTitle: { fontSize: 18, fontWeight: 'bold', color: '#22223B', marginVertical: 12 },
+  servicesRow: { flexDirection: 'row', gap: 12, marginBottom: 18 },
+  serviceCard: { flex: 1, backgroundColor: '#E8F6EF', borderRadius: 14, alignItems: 'center', padding: 14 },
+  serviceTitle: { fontWeight: 'bold', color: '#219653', marginTop: 6 },
+  serviceDesc: { color: '#555', fontSize: 13, marginTop: 2 },
+  rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+  link: { color: '#219653', fontWeight: 'bold' },
+  caretakerCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 12, padding: 12, marginBottom: 10, elevation: 1 },
+  caretakerName: { fontWeight: 'bold', color: '#22223B', fontSize: 16 },
+  caretakerInfo: { color: '#6FCF97', fontSize: 13 },
 });

@@ -1,8 +1,11 @@
 export const colors = {
-  background: '#E3F6FC', 
-  primary: '#6EC1E4',
-  accent: '#FFD166',
+  background: '#F6FFF8',      // Verde pastel muy claro
+  primary: '#6FCF97',         // Verde pastel principal
+  accent: '#A78BFA',          // Lila/acento
   text: '#22223B',
   white: '#fff',
-  card: '#BEE9F7',
+  card: '#E8F6EF',            // Verde pastel para cards
+  border: '#D1FADF',          // Verde pastel para bordes
+  muted: '#BDBDBD',
+  secondary: '#219653',       // Verde más fuerte para detalles
 };
