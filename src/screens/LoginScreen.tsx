@@ -81,12 +81,3 @@ export default function LoginScreen({ navigation }: Props) {
   );
 }
 
-// Estilos del componente
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background, justifyContent: 'center', padding: 16 },
-  appTitle: { fontSize: 50, color: colors.primary, fontFamily: 'Baloo2-Bold', textAlign: 'center', marginBottom: 32 },
-  input: { backgroundColor: colors.white, borderRadius: 8, padding: 12, marginBottom: 16, fontSize: 16, color: colors.text },
-  button: { backgroundColor: colors.primary, borderRadius: 8, padding: 12, marginVertical: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
-  buttonText: { color: colors.white, fontSize: 18, fontFamily: 'Baloo2-Bold', textAlign: 'center', marginLeft: 8 },
-  label: { color: '#6EC1E4', fontWeight: 'bold', marginBottom: 5, marginTop: 12, fontSize: 16},
-});

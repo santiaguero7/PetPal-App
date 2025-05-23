@@ -135,17 +135,12 @@ export default function SearchScreen({ navigation }: SearchScreenProps) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F6FFF8', padding: 18 },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 },
-  title: { fontSize: 24, fontWeight: 'bold', color: '#22223B' },
-  filterBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#E8F6EF', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 6 },
   filterBtnCompact: { alignItems: 'center', justifyContent: 'center', backgroundColor: '#E8F6EF', borderRadius: 12, width: 40, height: 40, marginLeft: 8 },
-  filterBtnText: { color: colors.primary, marginLeft: 6, fontWeight: 'bold' },
   searchBox: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#E8F6EF', // Verde claro, puedes usar colors.card si lo tienes
-    borderRadius: 20,
+    borderRadius: 20, 
     marginBottom: 16,
     paddingVertical: 4,
     borderWidth: 1,

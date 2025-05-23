@@ -50,9 +50,9 @@ const TAMANOS = [
 
 export default function AddPetScreen({ navigation }: Props) {
   const [nombre, setNombre] = useState('');
-  const [especie, setEspecie] = useState<string>(''); // NO null
+  const [especie, setEspecie] = useState<string>('');
   const [tamano, setTamano] = useState<'chica' | 'mediana' | 'grande'>('mediana');
-  const [raza, setRaza] = useState<string>(''); // en vez de string | null
+  const [raza, setRaza] = useState<string>('');
   const [edad, setEdad] = useState('');
   const [descripcion, setDescripcion] = useState('');
   const { addPet } = usePets();
@@ -67,7 +67,7 @@ export default function AddPetScreen({ navigation }: Props) {
       addPet({
         nombre,
         especie,
-        tamano: especie === 'Perro' ? (tamano as 'chica' | 'mediana' | 'grande') : 'mediana',
+        tamano: especie === 'Perro' ? tamano : 'mediana',
         raza: especie === 'Perro' ? (raza || '') : '',
         edad,
       });
@@ -119,7 +119,6 @@ export default function AddPetScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: { flexGrow: 1, backgroundColor: '#F6FFF8', justifyContent: 'center', padding: 18 },
-  title: { fontSize: 26, color: '#219653', fontWeight: 'bold', textAlign: 'center', marginBottom: 24 },
   label: { fontWeight: 'bold', marginTop: 16, marginBottom: 4, color: '#22223B' },
   input: {
     backgroundColor: '#fff',
@@ -140,12 +139,6 @@ const styles = StyleSheet.create({
     marginBottom: 24
   },
   buttonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
-  fotoPicker: { alignItems: 'center', marginVertical: 16 },
-  fotoMascota: { width: 100, height: 100, borderRadius: 50, marginBottom: 8 },
-  fotoText: { color: '#6FCF97', fontWeight: 'bold' },
-  selector: { marginBottom: 8 },
-  selectorButton: { borderWidth: 1, borderColor: '#6FCF97', borderRadius: 8, backgroundColor: '#fff', padding: 10 },
-  selectorText: { color: '#22223B', fontSize: 16 },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',

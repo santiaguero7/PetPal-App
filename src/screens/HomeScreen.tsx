@@ -19,7 +19,6 @@ type RootStackParamList = {
   Home: undefined;
   Buscar: undefined;
   Servicios: undefined;
-  // add other routes here if needed
 };
 
 type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Home'>;

@@ -165,8 +165,6 @@ export default function ServicesScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background, padding: 18 },
-  title: { fontSize: 22, fontWeight: 'bold', color: colors.text, marginBottom: 18 },
   tabsRow: { flexDirection: 'row', backgroundColor: colors.border, borderRadius: 20, marginBottom: 10, overflow: 'hidden' },
   tabBtn: { flex: 1, paddingVertical: 10, alignItems: 'center' },
   tabBtnActive: { backgroundColor: colors.primary },

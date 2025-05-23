@@ -105,7 +105,7 @@ export default function ProfileScreen({ navigation }: Props) {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['top']}>
-      <ScrollView contentContainerStyle={commonStyles.container}>
+      <ScrollView contentContainerStyle={{ padding: 18, backgroundColor: colors.background }}>
         <ScreenHeader title="Mi Perfil" subtitle="Registra tus mascotas y tus datos" />
         <View style={styles.profileCard}>
           <View style={styles.profileHeader} />
@@ -293,12 +293,6 @@ export default function ProfileScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-    padding: 18, // <--- así como en las otras pantallas
-  },
-  title: { fontSize: 24, fontWeight: 'bold', color: '#22223B', marginBottom: 18 },
   profileCard: {
     backgroundColor: '#fff',
     borderRadius: 32, 
@@ -365,44 +359,6 @@ const styles = StyleSheet.create({
     maxWidth: 400,
     alignItems: 'stretch',
     elevation: 2,
-  },
-  modalActionBtn: {
-    backgroundColor: '#6FCF97',
-    borderRadius: 20,
-    paddingVertical: 10,
-    paddingHorizontal: 18,
-    marginTop: 10,
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    width: '100%',
-  },
-  closeModalBtn: {
-    marginTop: 10, // Más cerca de los otros botones
-    padding: 10,
-    alignItems: 'center',
-    width: '100%',
-  },
-  closeModalBtnSmall: {
-    marginTop: 6,
-    padding: 10,
-    alignItems: 'center',
-    width: '100%',
-  },
-  saveBigBtn: {
-    backgroundColor: '#219653',
-    borderRadius: 20,
-    paddingVertical: 14,
-    paddingHorizontal: 18,
-    marginTop: 12,
-    alignItems: 'center',
-    width: '100%',
-  },
-  saveBigBtnText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 18,
-    textAlign: 'center',
   },
   input: {
     width: '100%',

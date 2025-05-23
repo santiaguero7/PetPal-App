@@ -58,28 +58,28 @@ function MainTabs() {
         name="Inicio"
         component={HomeScreen}
         options={{
-          tabBarIcon: ({ color, size }) => <Icon name="home" color={color} size={size} />,
+          tabBarIcon: ({ color }) => <Icon name="home" color={color} size={28} />,
         }}
       />
       <Tab.Screen
         name="Buscar"
         component={SearchScreen}
         options={{
-          tabBarIcon: ({ color, size }) => <Icon name="magnify" color={color} size={size} />,
+          tabBarIcon: ({ color }) => <Icon name="magnify" color={color} size={28} />,
         }}
       />
       <Tab.Screen
         name="Servicios"
         component={ServicesScreen}
         options={{
-          tabBarIcon: ({ color, size }) => <Icon name="clipboard-list" color={color} size={size} />,
+          tabBarIcon: ({ color }) => <Icon name="clipboard-list" color={color} size={28} />,
         }}
       />
       <Tab.Screen
         name="Perfil"
         component={ProfileScreen}
         options={{
-          tabBarIcon: ({ color, size }) => <Icon name="account" color={color} size={size} />,
+          tabBarIcon: ({ color }) => <Icon name="account" color={color} size={28} />,
         }}
       />
     </Tab.Navigator>
