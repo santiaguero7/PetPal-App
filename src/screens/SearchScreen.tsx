@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '../themes/colors';
+import { commonStyles } from '../themes/commonStyles';
 
 // Simula datos de cuidadores
 const caretakers = [
@@ -35,7 +37,18 @@ const TABS = [
   { key: 'boarding', label: 'Hospedaje' },
 ];
 
-export default function SearchScreen({ navigation }) {
+import type { StackNavigationProp } from '@react-navigation/stack';
+
+type RootStackParamList = {
+  Perfil: { caretakerId: number };
+  // Agrega aquí otras pantallas si es necesario
+};
+
+type SearchScreenProps = {
+  navigation: StackNavigationProp<RootStackParamList, 'Perfil'>;
+};
+
+export default function SearchScreen({ navigation }: SearchScreenProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('all');
 
@@ -53,69 +66,76 @@ export default function SearchScreen({ navigation }) {
   });
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.headerRow}>
-        <Text style={styles.title}>Buscar</Text>
-        <TouchableOpacity
-          style={styles.filterBtn}
-          onPress={() => {/* Aquí puedes abrir un modal de filtros */}}
-        >
-          <Icon name="filter-variant" size={22} color={colors.primary} />
-          <Text style={styles.filterBtnText}>Filtrar</Text>
-        </TouchableOpacity>
-      </View>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['top']}>
+      <ScrollView style={styles.container}>
 
-      <View style={styles.searchBox}>
-        <Icon name="magnify" size={20} color="#BDBDBD" style={{ marginLeft: 8 }} />
-        <TextInput
-          style={styles.input}
-          placeholder="Buscar cuidador o servicio..."
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          placeholderTextColor="#BDBDBD"
-        />
-      </View>
 
-      <View style={styles.tabsRow}>
-        {TABS.map((tab) => (
+        <View style={{ minHeight: 68, marginBottom: 18, marginTop: 8, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+          <View>
+            <Text style={commonStyles.screenTitle}>Buscar PetPals</Text>
+            <Text style={commonStyles.screenSubtitle}>Encuentra cuidadores cerca de ti</Text>
+          </View>
           <TouchableOpacity
-            key={tab.key}
-            style={[
-              styles.tabBtn,
-              activeTab === tab.key && styles.tabBtnActive,
-            ]}
-            onPress={() => setActiveTab(tab.key)}
+            style={styles.filterBtn}
+            onPress={() => {/* Aquí puedes abrir un modal de filtros */}}
           >
-            <Text style={[
-              styles.tabBtnText,
-              activeTab === tab.key && styles.tabBtnTextActive,
-            ]}>
-              {tab.label}
-            </Text>
+            <Icon name="filter-variant" size={22} color={colors.primary} />
+            <Text style={styles.filterBtnText}>Filtrar</Text>
           </TouchableOpacity>
-        ))}
-      </View>
+        </View>
 
-      <View style={{ marginTop: 18 }}>
-        {filteredCaretakers.length === 0 && (
-          <Text style={{ color: '#888', textAlign: 'center', marginTop: 30 }}>No se encontraron cuidadores.</Text>
-        )}
-        {filteredCaretakers.map((c) => (
-          <TouchableOpacity
-            key={c.id}
-            style={styles.caretakerCard}
-            onPress={() => navigation.navigate('Perfil', { caretakerId: c.id })}
-          >
-            <Icon name="account" size={32} color={colors.primary} style={{ marginRight: 12 }} />
-            <View>
-              <Text style={styles.caretakerName}>{c.nombre}</Text>
-              <Text style={styles.caretakerInfo}>{c.experiencia} • {c.distancia}</Text>
-              <Text style={styles.caretakerServices}>{c.servicios.join(', ')}</Text>
-            </View>
-          </TouchableOpacity>
-        ))}
-      </View>
-    </ScrollView>
+        <View style={styles.searchBox}>
+          <Icon name="magnify" size={20} color="#BDBDBD" style={{ marginLeft: 8 }} />
+          <TextInput
+            style={styles.input}
+            placeholder="Buscar cuidador o servicio..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholderTextColor="#BDBDBD"
+          />
+        </View>
+
+        <View style={styles.tabsRow}>
+          {TABS.map((tab) => (
+            <TouchableOpacity
+              key={tab.key}
+              style={[
+                styles.tabBtn,
+                activeTab === tab.key && styles.tabBtnActive,
+              ]}
+              onPress={() => setActiveTab(tab.key)}
+            >
+              <Text style={[
+                styles.tabBtnText,
+                activeTab === tab.key && styles.tabBtnTextActive,
+              ]}>
+                {tab.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <View style={{ marginTop: 18 }}>
+          {filteredCaretakers.length === 0 && (
+            <Text style={{ color: '#888', textAlign: 'center', marginTop: 30 }}>No se encontraron cuidadores.</Text>
+          )}
+          {filteredCaretakers.map((c) => (
+            <TouchableOpacity
+              key={c.id}
+              style={styles.caretakerCard}
+              onPress={() => navigation.navigate('Perfil', { caretakerId: c.id })}
+            >
+              <Icon name="account" size={32} color={colors.primary} style={{ marginRight: 12 }} />
+              <View>
+                <Text style={styles.caretakerName}>{c.nombre}</Text>
+                <Text style={styles.caretakerInfo}>{c.experiencia} • {c.distancia}</Text>
+                <Text style={styles.caretakerServices}>{c.servicios.join(', ')}</Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 

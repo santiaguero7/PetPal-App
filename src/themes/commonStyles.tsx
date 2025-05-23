@@ -4,7 +4,7 @@ import { colors } from './colors';
 export const commonStyles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: 'colors.background',
     padding: 18,
     paddingTop: 24,
     paddingBottom: 24,
@@ -12,7 +12,7 @@ export const commonStyles = StyleSheet.create({
   button: {
     backgroundColor: colors.primary,
     borderRadius: 20,
-    padding: 14,
+    padding: 12,
     marginVertical: 8,
     alignItems: 'center',
   },
@@ -43,17 +43,26 @@ export const commonStyles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.primary,
   },
-  title: {
-    fontSize: 26,
-    color: colors.primary,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 24,
-  },
   label: {
     fontWeight: 'bold',
     marginTop: 16,
     marginBottom: 4,
     color: colors.text,
   },
-});
+  screenTitle: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: colors.primary, 
+    marginBottom: 4,
+    letterSpacing: 0.5,
+    textAlign: 'left',
+    fontFamily: 'System', // O la fuente que prefieras
+  },
+  screenSubtitle: {
+    color: '#4b5563', // Gris oscuro, más estilo subtítulo
+    fontSize: 15,
+    marginBottom: 18,
+    textAlign: 'left',
+    fontWeight: '400',
+    fontStyle: 'italic',
+  },})

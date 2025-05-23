@@ -12,7 +12,6 @@ import LoginScreen from './screens/LoginScreen';
 import RegisterScreen from './screens/RegisterScreen';
 import HomeScreen from './screens/HomeScreen';
 import ProfileScreen from './screens/ProfileScreen';
-import PetsScreen from './screens/PetsScreen';
 import AddPetScreen from './screens/AddPetScreen';
 import SearchScreen from './screens/SearchScreen';
 import ServicesScreen from './screens/ServicesScreen';
@@ -94,7 +93,6 @@ export default function AppNavigator() {
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Register" component={RegisterScreen} />
         <Stack.Screen name="Home" component={MainTabs} options={{ headerShown: false }} />
-        <Stack.Screen name="Pets" component={PetsScreen} />
         <Stack.Screen name="AddPet" component={AddPetScreen} />
       </Stack.Navigator>
     </NavigationContainer>

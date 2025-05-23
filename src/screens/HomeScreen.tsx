@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, FlatList } from '
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { colors } from '../themes/colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { commonStyles } from '../themes/commonStyles';
 
 // Simula datos de cuidadores cercanos
 const caretakers = [
@@ -30,14 +31,9 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['top']}>
       <ScrollView style={styles.container}>
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.title}>PetPal</Text>
-            <Text style={styles.subtitle}>Cuida a tus amigos peludos</Text>
-          </View>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>SA</Text>
-          </View>
+        <View style={{ minHeight: 68, justifyContent: 'flex-end', marginBottom: 18, marginTop: 8 }}>
+          <Text style={commonStyles.screenTitle}>PetPal</Text>
+          <Text style={commonStyles.screenSubtitle}>Cuida a tus amigos peludos</Text>
         </View>
 
         <View style={styles.banner}>
@@ -63,7 +59,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
           <TouchableOpacity style={styles.serviceCard} onPress={() => navigation.navigate('Servicios')}>
             <Icon name="home-heart" size={28} color={colors.primary} />
             <Text style={styles.serviceTitle}>Cuidado en casa</Text>
-            <Text style={styles.serviceDesc}>Cuida tu mascota en casa</Text>
+            <Text style={styles.serviceDesc}>Cuida tu mascota con un PetPal</Text>
           </TouchableOpacity>
         </View>
 
@@ -108,8 +104,8 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 18, fontWeight: 'bold', color: '#22223B', marginVertical: 12 },
   servicesRow: { flexDirection: 'row', gap: 12, marginBottom: 18 },
   serviceCard: { flex: 1, backgroundColor: '#E8F6EF', borderRadius: 14, alignItems: 'center', padding: 14 },
-  serviceTitle: { fontWeight: 'bold', color: '#219653', marginTop: 6 },
-  serviceDesc: { color: '#555', fontSize: 13, marginTop: 2 },
+  serviceTitle: { fontWeight: 'bold', color: '#219653', marginTop: 6, textAlign: 'center' },
+  serviceDesc: { color: '#555', fontSize: 13, marginTop: 2, textAlign: 'center' },
   rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   link: { color: '#219653', fontWeight: 'bold' },
   caretakerCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 12, padding: 12, marginBottom: 10, elevation: 1 },
