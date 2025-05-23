@@ -10,6 +10,7 @@ import type { RootStackParamList, TabParamList } from '../navigation';
 import { usePets } from '../context/PetsContext';
 import PetCard from '../components/PetCard';
 import PetForm from '../components/PetForm';
+import ScreenHeader from '../components/ScreenHeader';
 
 // Opciones para selects (definidas aquí)
 const ESPECIES = [
@@ -104,11 +105,8 @@ export default function ProfileScreen({ navigation }: Props) {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['top']}>
-      <ScrollView style={styles.container}>
-        <View style={{ minHeight: 68, justifyContent: 'flex-end', marginBottom: 18, marginTop: 8 }}>
-          <Text style={commonStyles.screenTitle}>Tu Perfil</Text>
-          <Text style={commonStyles.screenSubtitle}>Registra tus mascotas y tus datos</Text>
-        </View>
+      <ScrollView contentContainerStyle={commonStyles.container}>
+        <ScreenHeader title="Mi Perfil" subtitle="Registra tus mascotas y tus datos" />
         <View style={styles.profileCard}>
           <View style={styles.profileHeader} />
           <View style={styles.avatarBox}>

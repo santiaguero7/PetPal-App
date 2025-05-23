@@ -4,6 +4,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { colors } from '../themes/colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { commonStyles } from '../themes/commonStyles';
+import ScreenHeader from '../components/ScreenHeader';
 
 // Simula datos de cuidadores cercanos
 const caretakers = [
@@ -30,11 +31,8 @@ interface HomeScreenProps {
 export default function HomeScreen({ navigation }: HomeScreenProps) {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['top']}>
-      <ScrollView style={styles.container}>
-        <View style={{ minHeight: 68, justifyContent: 'flex-end', marginBottom: 18, marginTop: 8 }}>
-          <Text style={commonStyles.screenTitle}>PetPal</Text>
-          <Text style={commonStyles.screenSubtitle}>Cuida a tus amigos peludos</Text>
-        </View>
+      <ScrollView contentContainerStyle={commonStyles.container}>
+        <ScreenHeader title="PetPal" subtitle="Cuida a tus amigos peludos" />
 
         <View style={styles.banner}>
           <Text style={styles.bannerTitle}>¿Necesitas un cuidador?</Text>

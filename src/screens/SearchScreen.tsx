@@ -4,6 +4,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '../themes/colors';
 import { commonStyles } from '../themes/commonStyles';
+import ScreenHeader from '../components/ScreenHeader';
 
 // Simula datos de cuidadores
 const caretakers = [
@@ -67,32 +68,26 @@ export default function SearchScreen({ navigation }: SearchScreenProps) {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['top']}>
-      <ScrollView style={styles.container}>
+      <ScrollView contentContainerStyle={commonStyles.container}>
+        <ScreenHeader title="Buscar PetPals" subtitle="Encuentra cuidadores cerca de ti" />
 
-
-        <View style={{ minHeight: 68, marginBottom: 18, marginTop: 8, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' }}>
-          <View>
-            <Text style={commonStyles.screenTitle}>Buscar PetPals</Text>
-            <Text style={commonStyles.screenSubtitle}>Encuentra cuidadores cerca de ti</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+          <View style={[styles.searchBox, { flex: 1, marginBottom: 0 }]}>
+            <Icon name="magnify" size={20} color="#BDBDBD" style={{ marginLeft: 8 }} />
+            <TextInput
+              style={styles.input}
+              placeholder="Buscar cuidador o servicio..."
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholderTextColor="#BDBDBD"
+            />
           </View>
           <TouchableOpacity
-            style={styles.filterBtn}
+            style={styles.filterBtnCompact}
             onPress={() => {/* Aquí puedes abrir un modal de filtros */}}
           >
-            <Icon name="filter-variant" size={22} color={colors.primary} />
-            <Text style={styles.filterBtnText}>Filtrar</Text>
+            <Icon name="filter-variant" size={20} color={colors.primary} />
           </TouchableOpacity>
-        </View>
-
-        <View style={styles.searchBox}>
-          <Icon name="magnify" size={20} color="#BDBDBD" style={{ marginLeft: 8 }} />
-          <TextInput
-            style={styles.input}
-            placeholder="Buscar cuidador o servicio..."
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            placeholderTextColor="#BDBDBD"
-          />
         </View>
 
         <View style={styles.tabsRow}>
@@ -144,8 +139,18 @@ const styles = StyleSheet.create({
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 },
   title: { fontSize: 24, fontWeight: 'bold', color: '#22223B' },
   filterBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#E8F6EF', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 6 },
+  filterBtnCompact: { alignItems: 'center', justifyContent: 'center', backgroundColor: '#E8F6EF', borderRadius: 12, width: 40, height: 40, marginLeft: 8 },
   filterBtnText: { color: colors.primary, marginLeft: 6, fontWeight: 'bold' },
-  searchBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 20, marginBottom: 16, paddingVertical: 4 },
+  searchBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E8F6EF', // Verde claro, puedes usar colors.card si lo tienes
+    borderRadius: 20,
+    marginBottom: 16,
+    paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: '#6FCF97', // Verde de tu paleta, puedes usar colors.primary si prefieres
+  },
   input: { flex: 1, paddingHorizontal: 10, fontSize: 16, color: '#22223B', height: 40 },
   tabsRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10, gap: 8 },
   tabBtn: { flex: 1, backgroundColor: '#E8F6EF', borderRadius: 20, paddingVertical: 8, alignItems: 'center' },

@@ -4,6 +4,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { colors } from '../themes/colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { commonStyles } from '../themes/commonStyles';
+import ScreenHeader from '../components/ScreenHeader';
 
 const upcomingBookings = [
   {
@@ -120,11 +121,8 @@ export default function ServicesScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['top']}>
-      <ScrollView style={commonStyles.container}>
-        <View style={{ minHeight: 68, justifyContent: 'flex-end', marginBottom: 18, marginTop: 8 }}>
-          <Text style={commonStyles.screenTitle}>Contrataciones</Text>
-          <Text style={commonStyles.screenSubtitle}>Tus servicios reservados</Text>
-        </View>
+      <ScrollView contentContainerStyle={commonStyles.container}>
+        <ScreenHeader title="Contrataciones" subtitle="Tus servicios reservados" />
         <View style={styles.tabsRow}>
           <TouchableOpacity
             style={[styles.tabBtn, tab === 'upcoming' && styles.tabBtnActive]}
