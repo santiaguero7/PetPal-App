@@ -93,7 +93,11 @@ export default function AppNavigator() {
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Register" component={RegisterScreen} />
         <Stack.Screen name="Home" component={MainTabs} options={{ headerShown: false }} />
-        <Stack.Screen name="AddPet" component={AddPetScreen} />
+        <Stack.Screen
+          name="AddPet"
+          component={AddPetScreen}
+          options={{ headerShown: false }}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );

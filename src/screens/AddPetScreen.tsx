@@ -4,7 +4,7 @@ import PetForm from '../components/PetForm';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation';
 import { usePets } from '../context/PetsContext';
-
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AddPet'>;
 
@@ -83,7 +83,17 @@ export default function AddPetScreen({ navigation }: Props) {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>Agregar Mascota</Text>
+        <View style={styles.headerRow}>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={styles.backBtn}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Icon name="arrow-left" size={26} color="#219653" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Agregar Mascota</Text>
+          <View style={{ width: 26 }} />
+        </View>
         <PetForm
           nombre={nombre} setNombre={setNombre}
           especie={especie} setEspecie={setEspecie}
@@ -136,4 +146,21 @@ const styles = StyleSheet.create({
   selector: { marginBottom: 8 },
   selectorButton: { borderWidth: 1, borderColor: '#6FCF97', borderRadius: 8, backgroundColor: '#fff', padding: 10 },
   selectorText: { color: '#22223B', fontSize: 16 },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 18,
+    marginTop: 8,
+    justifyContent: 'space-between',
+  },
+  backBtn: {
+    padding: 4,
+  },
+  headerTitle: {
+    flex: 1,
+    textAlign: 'center',
+    fontSize: 24,
+    color: '#219653',
+    fontWeight: 'bold',
+  },
 });
