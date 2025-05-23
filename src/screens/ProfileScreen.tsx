@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react'; 
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -11,6 +11,10 @@ import { usePets } from '../context/PetsContext';
 import PetCard from '../components/PetCard';
 import PetForm from '../components/PetForm';
 import ScreenHeader from '../components/ScreenHeader';
+import { getUserById } from '../services/users';
+import { getToken } from '../storage/token';
+import { jwtDecode } from 'jwt-decode';
+
 
 // Opciones para selects (definidas aquí)
 const ESPECIES = [
@@ -35,15 +39,12 @@ const RAZAS_GATO = [
 
 type ProfileScreenNavigationProp = BottomTabScreenProps<TabParamList, 'Perfil'> & {
   navigation: BottomTabScreenProps<TabParamList, 'Perfil'>['navigation'] &
-    StackNavigationProp<RootStackParamList>;
+  StackNavigationProp<RootStackParamList>;
 };
 type Props = ProfileScreenNavigationProp;
 
-const currentUser = {
-  name: "Santiago Aguero",
-  email: "aguero17.2001@gmail.com",
-  image: "",
-};
+
+
 
 const menuItems = [
   { icon: 'account-cog', label: "Configuración de cuenta" },
@@ -54,6 +55,28 @@ const menuItems = [
 ];
 
 export default function ProfileScreen({ navigation }: Props) {
+
+  const [user, setUser] = useState<any>(null);
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const token = await getToken();
+        if (!token) {
+          console.warn('No hay token disponible');
+          return;
+        }
+
+        const decoded: any = jwtDecode(token);
+        const userId = decoded.id;
+        const userData = await getUserById(userId);
+        setUser(userData);
+      } catch (error) {
+        console.error('Error cargando usuario:', error);
+      }
+    };
+
+    fetchUser();
+  }, []);
   const { pets, editPet, removePet } = usePets();
   const [selectedPet, setSelectedPet] = useState<any>(null);
   const [editMode, setEditMode] = useState(false);
@@ -94,11 +117,13 @@ export default function ProfileScreen({ navigation }: Props) {
       '¿Seguro que quieres eliminar esta mascota?',
       [
         { text: 'Cancelar', style: 'cancel' },
-        { text: 'Eliminar', style: 'destructive', onPress: () => {
+        {
+          text: 'Eliminar', style: 'destructive', onPress: () => {
             removePet(selectedPet.id);
             setEditMode(false);
             setSelectedPet(null);
-          } }
+          }
+        }
       ]
     );
   };
@@ -112,13 +137,13 @@ export default function ProfileScreen({ navigation }: Props) {
           <View style={styles.avatarBox}>
             <View style={styles.avatar}>
               <Text style={styles.avatarText}>
-                {currentUser.name.substring(0, 2).toUpperCase()}
+                {user?.name?.substring(0, 2).toUpperCase() || 'US'}
               </Text>
             </View>
           </View>
           <View style={styles.profileInfo}>
-            <Text style={styles.profileName}>{currentUser.name}</Text>
-            <Text style={styles.profileEmail}>{currentUser.email}</Text>
+            <Text style={styles.profileName}>{user?.name}</Text>
+            <Text style={styles.profileEmail}>{user?.email}</Text>
             <TouchableOpacity style={styles.editBtn}>
               <Text style={styles.editBtnText}>Editar perfil</Text>
             </TouchableOpacity>
@@ -295,15 +320,15 @@ export default function ProfileScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   profileCard: {
     backgroundColor: '#fff',
-    borderRadius: 32, 
+    borderRadius: 32,
     marginBottom: 12,
     overflow: 'hidden',
     elevation: 2,
     paddingVertical: 8,
     paddingHorizontal: 10,
   },
-  profileHeader: { 
-    height: 36, 
+  profileHeader: {
+    height: 36,
     backgroundColor: '#D1FADF',
     borderTopLeftRadius: 32,    // <--- agrega esto
     borderTopRightRadius: 32,   // <--- agrega esto

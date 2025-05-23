@@ -5,6 +5,9 @@ import type { RootStackParamList } from '../navigation';
 import { colors } from '../themes/colors';
 import { commonStyles } from '../themes/commonStyles';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { loginUser } from '../services/auth';
+import { saveToken } from '../storage/token';
+
 
 // Define los props del componente usando tipos de React Navigation
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
@@ -14,11 +17,21 @@ export default function LoginScreen({ navigation }: Props) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  // Función que maneja el login (simulado)
-  const handleLogin = () => {
-    // lógica de autenticación
-    navigation.replace('Home');  // Navega a Home después del login
-  };
+  // Función que maneja el login 
+const handleLogin = async () => {
+  if (!email.trim() || !password.trim()) {
+    alert('Por favor ingresá correo y contraseña');
+    return;
+  }
+
+  try {
+    const res = await loginUser(email, password);
+    await saveToken(res.token); // ✅ guardar token localmente
+    navigation.replace('Home');
+  } catch (error: any) {
+    alert(error.message || 'Ocurrió un error al iniciar sesión');
+  }
+};
 
   return (
     <View style={[commonStyles.container, { justifyContent: 'center' }]}>
@@ -52,7 +65,7 @@ export default function LoginScreen({ navigation }: Props) {
         returnKeyType="done"
         onSubmitEditing={() => Keyboard.dismiss()}
       />
-      
+
       {/* Input para contraseña (oculta el texto) */}
       <Text style={commonStyles.label}>Contraseña</Text>
       <TextInput
@@ -65,12 +78,12 @@ export default function LoginScreen({ navigation }: Props) {
         returnKeyType="done"
         onSubmitEditing={() => Keyboard.dismiss()}
       />
-      
+
       {/* Botón de login */}
       <TouchableOpacity style={commonStyles.button} onPress={handleLogin}>
         <Text style={commonStyles.buttonText}>Entrar</Text>
       </TouchableOpacity>
-      
+
       {/* Botón para redirigir a registro */}
       <Button
         title="¿No tienes cuenta? Regístrate"

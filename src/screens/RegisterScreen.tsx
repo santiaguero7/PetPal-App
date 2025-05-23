@@ -4,6 +4,9 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { colors } from '../themes/colors';
 import { commonStyles } from '../themes/commonStyles';
 import ModalSelector from 'react-native-modal-selector';
+import { registerUser } from '../services/auth';
+import { saveToken } from '../storage/token';
+
 
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation';
@@ -21,31 +24,35 @@ export default function RegisterScreen({ navigation }: Props) {
   const [direccion, setDireccion] = useState('');
   const [provincia, setProvincia] = useState('');
 
-  const handleRegister = () => {
-    if (!email.trim() || !nombre.trim() || !password.trim() || !repeatPassword.trim() || !dni.trim() || !direccion.trim() || !provincia.trim()) {
-      Alert.alert('Error', 'Completa todos los campos');
-      return;
-    }
-    if (password !== repeatPassword) {
-      Alert.alert('Error', 'Las contraseñas no coinciden');
-      return;
-    }
-    const datosRegistro = {
-      email,
-      nombre,
-      password,
-      rol,
-      dni,
-      direccion,
-      provincia,
-      ...(rol === 'trabajador' && {
-        especialidad,
-      }),
-    };
-    console.log(datosRegistro);
-    // Aquí iría tu lógica de registro
-    navigation.replace('Login');
-  };
+
+
+
+
+const handleRegister = async () => {
+  if (!email.trim() || !nombre.trim() || !password.trim() || !repeatPassword.trim() || !dni.trim() || !direccion.trim() || !provincia.trim()) {
+    Alert.alert('Error', 'Completa todos los campos');
+    return;
+  }
+
+  if (password !== repeatPassword) {
+    Alert.alert('Error', 'Las contraseñas no coinciden');
+    return;
+  }
+
+  try {
+    const apiRole = rol === 'trabajador' ? 'petpal' : 'client';
+
+    const res = await registerUser(nombre, email, password, apiRole);
+
+    await saveToken(res.token); // ✅ guardamos el token
+    Alert.alert('¡Registro exitoso!', `Bienvenido/a ${res.user.name}`);
+    navigation.replace('Home'); // redirigimos al Home directamente
+  } catch (error: any) {
+    Alert.alert('Error en el registro', error.message || 'Intentalo más tarde');
+  }
+};
+
+
 
   const ROLES = [
     { key: 'trabajador', label: 'PetPal' },
@@ -87,7 +94,7 @@ export default function RegisterScreen({ navigation }: Props) {
               pointerEvents="none"
             />
           </ModalSelector>
-          <Text style={{ color: '#555', fontSize: 14, marginBottom: 0, marginTop: 1, marginLeft: 10}}>
+          <Text style={{ color: '#555', fontSize: 14, marginBottom: 0, marginTop: 1, marginLeft: 10 }}>
             {ROL_DESCRIPCIONES[rol]}
           </Text>
         </View>

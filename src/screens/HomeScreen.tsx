@@ -1,17 +1,11 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, FlatList } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { colors } from '../themes/colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { commonStyles } from '../themes/commonStyles';
 import ScreenHeader from '../components/ScreenHeader';
-
-// Simula datos de cuidadores cercanos
-const caretakers = [
-  { id: 1, nombre: 'Ana López', experiencia: '3 años', distancia: '1.2 km' },
-  { id: 2, nombre: 'Carlos Ruiz', experiencia: '5 años', distancia: '2.5 km' },
-  { id: 3, nombre: 'María Gómez', experiencia: '2 años', distancia: '3.1 km' },
-];
+import { getAllPetpals } from '../services/petpals';
 
 import type { StackNavigationProp } from '@react-navigation/stack';
 
@@ -28,6 +22,35 @@ interface HomeScreenProps {
 }
 
 export default function HomeScreen({ navigation }: HomeScreenProps) {
+  const [petpals, setPetpals] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPetpals = async () => {
+      try {
+        const data = await getAllPetpals();
+        setPetpals(data);
+      } catch (error) {
+        console.error('Error al obtener petpals:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPetpals();
+  }, []);
+
+  const translateSize = (size: string) => {
+  switch (size) {
+    case 'small': return 'Pequeños';
+    case 'medium': return 'Medianos';
+    case 'large': return 'Grandes';
+    case 'all': return 'Todos los tamaños';
+    default: return size;
+  }
+};
+
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['top']}>
       <ScrollView contentContainerStyle={commonStyles.container}>
@@ -66,21 +89,34 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
             <Text style={styles.link}>Ver todos</Text>
           </TouchableOpacity>
         </View>
-        <View>
-          {caretakers.slice(0, 3).map((c) => (
-            <TouchableOpacity
-              key={c.id}
-              style={styles.caretakerCard}
-              onPress={() => navigation.navigate('Buscar')}
-            >
-              <Icon name="account" size={32} color={colors.primary} style={{ marginRight: 12 }} />
-              <View>
-                <Text style={styles.caretakerName}>{c.nombre}</Text>
-                <Text style={styles.caretakerInfo}>{c.experiencia} • {c.distancia}</Text>
-              </View>
-            </TouchableOpacity>
-          ))}
-        </View>
+
+        {loading ? (
+          <ActivityIndicator size="large" color={colors.primary} />
+        ) : (
+          <View>
+            {petpals.slice(0, 3).map((p) => (
+              <TouchableOpacity
+                key={p.id}
+                style={styles.caretakerCard}
+                onPress={() => navigation.navigate('Buscar')}
+              >
+                <Icon name="account" size={32} color={colors.primary} style={{ marginRight: 12 }} />
+                <View>
+                  <Text style={styles.caretakerName}>
+                    🧑‍⚕️ {p.service_type === 'dog walker' ? 'Paseador' : 'Cuidador'} en {p.location}
+                  </Text>
+                  <Text style={styles.caretakerInfo}>📍 {p.experience}</Text>
+                  <Text style={styles.caretakerInfo}>
+                    💰 {p.price_per_hour ? `$${p.price_per_hour}/hora` : `$${p.price_per_day}/día`}
+                  </Text>
+                  <Text style={styles.caretakerInfo}>
+                    🐾 {p.pet_type === 'dog' ? 'Perros' : 'Gatos'} • 📏 {translateSize(p.size_accepted)}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -107,5 +143,5 @@ const styles = StyleSheet.create({
   link: { color: '#219653', fontWeight: 'bold' },
   caretakerCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 12, padding: 12, marginBottom: 10, elevation: 1 },
   caretakerName: { fontWeight: 'bold', color: '#22223B', fontSize: 16 },
-  caretakerInfo: { color: '#6FCF97', fontSize: 13 },
+  caretakerInfo: { color: '#777', fontSize: 13, marginTop: 2 },
 });
