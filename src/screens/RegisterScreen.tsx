@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Keyboard, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { colors } from '../themes/colors';
@@ -24,7 +24,14 @@ export default function RegisterScreen({ navigation }: Props) {
   const [direccion, setDireccion] = useState('');
   const [provincia, setProvincia] = useState('');
 
-
+  // Referencias para los inputs
+  const nombreRef = useRef<TextInput>(null);
+  const emailRef = useRef<TextInput>(null);
+  const passwordRef = useRef<TextInput>(null);
+  const repeatPasswordRef = useRef<TextInput>(null);
+  const dniRef = useRef<TextInput>(null);
+  const direccionRef = useRef<TextInput>(null);
+  const provinciaRef = useRef<TextInput>(null);
 
 
 
@@ -67,9 +74,15 @@ const handleRegister = async () => {
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 120 : 120} // Aumenta el offset
     >
-      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
+        scrollEnabled
+      >
+        {/* Icono principal centrado */}
         <Icon name="paw" size={48} color={colors.primary} style={{ alignSelf: 'center', marginBottom: 8 }} />
 
         <View style={{ marginBottom: 10 }}>
@@ -101,13 +114,18 @@ const handleRegister = async () => {
 
         <View style={{ marginTop: 18 }}>
           <TextInput
+            ref={nombreRef}
             style={commonStyles.input}
             placeholder="Nombre"
             value={nombre}
             onChangeText={setNombre}
             placeholderTextColor="#888"
+            returnKeyType="next"
+            blurOnSubmit={false}
+            onSubmitEditing={() => emailRef.current?.focus()}
           />
           <TextInput
+            ref={emailRef}
             style={commonStyles.input}
             placeholder="Ingresá tu correo"
             value={email}
@@ -115,54 +133,83 @@ const handleRegister = async () => {
             keyboardType="email-address"
             autoCapitalize="none"
             placeholderTextColor="#888"
-            returnKeyType="done"
-            onSubmitEditing={() => Keyboard.dismiss()}
+            returnKeyType="next"
+            blurOnSubmit={false}
+            onSubmitEditing={() => passwordRef.current?.focus()}
           />
           <TextInput
+            ref={passwordRef}
             style={commonStyles.input}
             placeholder="Ingresá tu contraseña"
             value={password}
             onChangeText={setPassword}
             secureTextEntry
             placeholderTextColor="#888"
-            returnKeyType="done"
-            onSubmitEditing={() => Keyboard.dismiss()}
+            returnKeyType="next"
+            blurOnSubmit={false}
+            onSubmitEditing={() => repeatPasswordRef.current?.focus()}
           />
           <TextInput
+            ref={repeatPasswordRef}
             style={commonStyles.input}
             placeholder="Repetir contraseña"
             value={repeatPassword}
             onChangeText={setRepeatPassword}
             secureTextEntry
             placeholderTextColor="#888"
+            returnKeyType="next"
+            blurOnSubmit={false}
+            onSubmitEditing={() => dniRef.current?.focus()}
           />
           <TextInput
+            ref={dniRef}
             style={commonStyles.input}
             placeholder="DNI"
             value={dni}
             onChangeText={setDni}
             keyboardType="numeric"
+            // Cambia el texto del botón del teclado según la plataforma
+            returnKeyType={Platform.OS === 'ios' ? 'done' : 'next'}
+            blurOnSubmit={false}
+            onSubmitEditing={() => direccionRef.current?.focus()}
           />
 
           {/* Botón de autenticación por cámara, después del DNI */}
           <TouchableOpacity
-            style={[commonStyles.button, { backgroundColor: colors.secondary, flexDirection: 'row', alignItems: 'center', marginBottom: 12 }]}
+            style={[
+              commonStyles.button,
+              {
+                backgroundColor: colors.secondary,
+                flexDirection: 'row',
+                alignItems: 'center',
+                marginBottom: 20, // padding inferior extra
+                paddingBottom: 12, // padding inferior extra
+              }
+            ]}
             onPress={() => Alert.alert('Función demo', 'Aquí se abriría la cámara para validar tu DNI')}
           >
             <Icon name="camera" size={22} color={colors.text} />
             <Text style={[commonStyles.buttonText, { color: colors.text, marginLeft: 8 }]}>Validar identidad con foto de DNI</Text>
           </TouchableOpacity>
           <TextInput
+            ref={direccionRef}
             style={commonStyles.input}
             placeholder="Dirección"
             value={direccion}
             onChangeText={setDireccion}
+            returnKeyType="next"
+            blurOnSubmit={false}
+            onSubmitEditing={() => provinciaRef.current?.focus()}
           />
           <TextInput
+            ref={provinciaRef}
             style={commonStyles.input}
             placeholder="Provincia"
             value={provincia}
             onChangeText={setProvincia}
+            returnKeyType="done"
+            blurOnSubmit={true}
+            onSubmitEditing={() => Keyboard.dismiss()}
           />
         </View>
 
@@ -170,6 +217,7 @@ const handleRegister = async () => {
           <Icon name="account-plus" size={24} color={colors.white} />
           <Text style={commonStyles.buttonText}>Registrarme</Text>
         </TouchableOpacity>
+        {/* Botón volver con flecha verde, abajo del todo */}
         <TouchableOpacity
           style={[
             commonStyles.button,
@@ -177,8 +225,8 @@ const handleRegister = async () => {
           ]}
           onPress={() => navigation.goBack()}
         >
-          <Icon name="arrow-left" size={24} color={colors.text} />
-          <Text style={[commonStyles.buttonText, { color: colors.text }]}>Volver</Text>
+          <Icon name="arrow-left" size={24} color={colors.primary} />
+          <Text style={[commonStyles.buttonText, { color: colors.primary }]}>Volver</Text>
         </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
