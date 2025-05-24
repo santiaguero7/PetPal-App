@@ -68,7 +68,10 @@ export default function SearchScreen({ navigation }: SearchScreenProps) {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['top']}>
-      <ScrollView contentContainerStyle={commonStyles.container}>
+      <ScrollView
+        contentContainerStyle={{ padding: 18, backgroundColor: colors.background }}
+        showsVerticalScrollIndicator={true}
+      >
         <ScreenHeader title="Buscar PetPals" subtitle="Encuentra cuidadores cerca de ti" />
 
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>

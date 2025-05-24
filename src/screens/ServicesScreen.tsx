@@ -121,7 +121,7 @@ export default function ServicesScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['top']}>
-      <ScrollView contentContainerStyle={commonStyles.container}>
+      <ScrollView contentContainerStyle={{ padding: 18, backgroundColor: colors.background }}>
         <ScreenHeader title="Contrataciones" subtitle="Tus servicios reservados" />
         <View style={styles.tabsRow}>
           <TouchableOpacity
