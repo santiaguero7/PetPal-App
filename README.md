@@ -9,3 +9,9 @@ Búsqueda de cuidadores y paseadores según criterios personalizados.
 Contratación directa desde la app.
 
 Calificación y reseñas de servicios.
+
+
+
+npm install react react-native @react-navigation/native-stack react-native-vector-icons
+npm install --save-dev @types/react @types/react-native
+npm install expo
