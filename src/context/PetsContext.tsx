@@ -70,3 +70,5 @@ export const usePets = () => {
   if (!context) throw new Error('Usar dentro de PetsProvider');
   return context;
 };
+
+export { PetsContext };
