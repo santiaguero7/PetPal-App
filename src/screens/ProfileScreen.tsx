@@ -385,20 +385,4 @@ const styles = StyleSheet.create({
     alignItems: 'stretch',
     elevation: 2,
   },
-  input: {
-    width: '100%',
-    borderWidth: 1,
-    borderColor: '#E8F6EF',
-    borderRadius: 8,
-    padding: 8,
-    marginVertical: 4,
-    fontSize: 15,
-    backgroundColor: '#F6FFF8',
-  },
-  label: {
-    fontWeight: 'bold',
-    color: '#22223B',
-    marginTop: 8,
-    marginBottom: 2,
-  },
 });

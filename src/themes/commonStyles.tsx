@@ -53,4 +53,21 @@ export const commonStyles = StyleSheet.create({
     textAlign: 'left',
     fontWeight: '400',
     fontStyle: 'italic',
-  },})
+  },
+  modalTitle: {
+    fontWeight: 'bold',
+    fontSize: 18,
+    color: '#22223B',
+    marginTop: 8,
+    marginBottom: 8,
+    textAlign: 'center',
+    alignSelf: 'center',
+    width: '100%',
+  },
+  caretakerName: {
+    fontWeight: 'bold',
+    color: '#22223B',
+    fontSize: 16,
+    marginBottom: 2,
+  },
+});
