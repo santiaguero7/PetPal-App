@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, TouchableOpacity, Keyboard, KeyboardAvoidingView, ScrollView, Platform } from 'react-native';
+import { View, Text, TextInput, Button, StyleSheet, TouchableOpacity, Keyboard, KeyboardAvoidingView, ScrollView, Platform, Alert } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation';
 import { colors } from '../themes/colors';
@@ -19,20 +19,22 @@ export default function LoginScreen({ navigation }: Props) {
   const passwordRef = useRef<TextInput>(null);
 
   // Función que maneja el login 
-const handleLogin = async () => {
-  if (!email.trim() || !password.trim()) {
-    alert('Por favor ingresá correo y contraseña');
-    return;
-  }
+  const handleLogin = async () => {
+    try {
+      const res = await loginUser(email, password);
+      console.log('RESPUESTA REGISTRO:', res); // <-- Esto va en tu código, NO en la terminal
+      await saveToken(res.token);
 
-  try {
-    const res = await loginUser(email, password);
-    await saveToken(res.token); // ✅ guardar token localmente
-    navigation.replace('Home');
-  } catch (error: any) {
-    alert(error.message || 'Ocurrió un error al iniciar sesión');
-  }
-};
+      // Redirige según el rol:
+      if (res.user.role === 'petpal') {
+        navigation.replace('PetPalHome');
+      } else {
+        navigation.replace('Home');
+      }
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Error al iniciar sesión');
+    }
+  };
 
   return (
     <KeyboardAvoidingView

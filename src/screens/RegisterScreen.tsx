@@ -23,6 +23,9 @@ export default function RegisterScreen({ navigation }: Props) {
   const [especialidad, setEspecialidad] = useState('');
   const [direccion, setDireccion] = useState('');
   const [provincia, setProvincia] = useState('');
+  const [barrio, setBarrio] = useState('');
+  const [telefono, setTelefono] = useState('');
+  const [ciudad, setCiudad] = useState('');
 
   // Referencias para los inputs
   const nombreRef = useRef<TextInput>(null);
@@ -32,11 +35,25 @@ export default function RegisterScreen({ navigation }: Props) {
   const dniRef = useRef<TextInput>(null);
   const direccionRef = useRef<TextInput>(null);
   const provinciaRef = useRef<TextInput>(null);
+  const barrioRef = useRef<TextInput>(null);
+  const telefonoRef = useRef<TextInput>(null);
+  const ciudadRef = useRef<TextInput>(null);
 
 
 
 const handleRegister = async () => {
-  if (!email.trim() || !nombre.trim() || !password.trim() || !repeatPassword.trim() || !dni.trim() || !direccion.trim() || !provincia.trim()) {
+  if (
+    !email.trim() ||
+    !nombre.trim() ||
+    !password.trim() ||
+    !repeatPassword.trim() ||
+    !dni.trim() ||
+    !direccion.trim() ||
+    !provincia.trim() ||
+    !barrio.trim() ||
+    !telefono.trim() ||
+    !ciudad.trim()
+  ) {
     Alert.alert('Error', 'Completa todos los campos');
     return;
   }
@@ -49,11 +66,27 @@ const handleRegister = async () => {
   try {
     const apiRole = rol === 'trabajador' ? 'petpal' : 'client';
 
-    const res = await registerUser(nombre, email, password, apiRole);
+    const res = await registerUser(
+      nombre,
+      email,
+      password,
+      apiRole,
+      dni,
+      direccion,
+      barrio,    
+      telefono,  
+      ciudad     
+    );
 
     await saveToken(res.token); // ✅ guardamos el token
     Alert.alert('¡Registro exitoso!', `Bienvenido/a ${res.user.name}`);
-    navigation.replace('Home'); // redirigimos al Home directamente
+
+    // Redirige según el rol:
+    if (res.user.role === 'petpal') {
+      navigation.replace('PetPalHome'); // O 'PetPalTabs' si usás tabs
+    } else {
+      navigation.replace('Home');
+    }
   } catch (error: any) {
     Alert.alert('Error en el registro', error.message || 'Intentalo más tarde');
   }
@@ -167,36 +200,19 @@ const handleRegister = async () => {
             placeholder="DNI"
             value={dni}
             onChangeText={setDni}
-            keyboardType="numeric"
-            // Cambia el texto del botón del teclado según la plataforma
-            returnKeyType={Platform.OS === 'ios' ? 'done' : 'next'}
+            keyboardType="number-pad"
+            placeholderTextColor="#888"
+            returnKeyType="next"
             blurOnSubmit={false}
             onSubmitEditing={() => direccionRef.current?.focus()}
           />
-
-          {/* Botón de autenticación por cámara, después del DNI */}
-          <TouchableOpacity
-            style={[
-              commonStyles.button,
-              {
-                backgroundColor: colors.secondary,
-                flexDirection: 'row',
-                alignItems: 'center',
-                marginBottom: 20, // padding inferior extra
-                paddingBottom: 12, // padding inferior extra
-              }
-            ]}
-            onPress={() => Alert.alert('Función demo', 'Aquí se abriría la cámara para validar tu DNI')}
-          >
-            <Icon name="camera" size={22} color={colors.text} />
-            <Text style={[commonStyles.buttonText, { color: colors.text, marginLeft: 8 }]}>Validar identidad con foto de DNI</Text>
-          </TouchableOpacity>
           <TextInput
             ref={direccionRef}
             style={commonStyles.input}
             placeholder="Dirección"
             value={direccion}
             onChangeText={setDireccion}
+            placeholderTextColor="#888"
             returnKeyType="next"
             blurOnSubmit={false}
             onSubmitEditing={() => provinciaRef.current?.focus()}
@@ -207,6 +223,41 @@ const handleRegister = async () => {
             placeholder="Provincia"
             value={provincia}
             onChangeText={setProvincia}
+            placeholderTextColor="#888"
+            returnKeyType="next"
+            blurOnSubmit={false}
+            onSubmitEditing={() => barrioRef.current?.focus()}
+          />
+          <TextInput
+            ref={barrioRef}
+            style={commonStyles.input}
+            placeholder="Barrio"
+            value={barrio}
+            onChangeText={setBarrio}
+            placeholderTextColor="#888"
+            returnKeyType="next"
+            blurOnSubmit={false}
+            onSubmitEditing={() => telefonoRef.current?.focus()}
+          />
+          <TextInput
+            ref={telefonoRef}
+            style={commonStyles.input}
+            placeholder="Teléfono"
+            value={telefono}
+            onChangeText={setTelefono}
+            keyboardType="number-pad"
+            placeholderTextColor="#888"
+            returnKeyType="next"
+            blurOnSubmit={false}
+            onSubmitEditing={() => ciudadRef.current?.focus()}
+          />
+          <TextInput
+            ref={ciudadRef}
+            style={commonStyles.input}
+            placeholder="Ciudad"
+            value={ciudad}
+            onChangeText={setCiudad}
+            placeholderTextColor="#888"
             returnKeyType="done"
             blurOnSubmit={true}
             onSubmitEditing={() => Keyboard.dismiss()}
@@ -216,17 +267,6 @@ const handleRegister = async () => {
         <TouchableOpacity style={commonStyles.button} onPress={handleRegister}>
           <Icon name="account-plus" size={24} color={colors.white} />
           <Text style={commonStyles.buttonText}>Registrarme</Text>
-        </TouchableOpacity>
-        {/* Botón volver con flecha verde, abajo del todo */}
-        <TouchableOpacity
-          style={[
-            commonStyles.button,
-            { backgroundColor: colors.secondary, flexDirection: 'row', alignItems: 'center', marginTop: 8 }
-          ]}
-          onPress={() => navigation.goBack()}
-        >
-          <Icon name="arrow-left" size={24} color={colors.primary} />
-          <Text style={[commonStyles.buttonText, { color: colors.primary }]}>Volver</Text>
         </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>

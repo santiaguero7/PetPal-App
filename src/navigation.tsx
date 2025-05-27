@@ -15,6 +15,9 @@ import ProfileScreen from './screens/ProfileScreen';
 import AddPetScreen from './screens/AddPetScreen';
 import SearchScreen from './screens/SearchScreen';
 import ServicesScreen from './screens/ServicesScreen';
+import PetPalHomeScreen from './screens/PetPalHomeScreen';
+import PetPalProfileScreen from './screens/PetPalProfileScreen';
+import PetPalRequestScreen from './screens/PetPalRequest';
 
 // Tipo para el stack
 export type RootStackParamList = {
@@ -23,6 +26,9 @@ export type RootStackParamList = {
   Home: undefined;
   Pets: undefined;
   AddPet: undefined;
+  PetPalHome: undefined;
+  PetPalProfile: undefined;
+  PetPalRequest: undefined;
 };
 
 // Tipo para los tabs
@@ -78,6 +84,48 @@ function MainTabs() {
       <Tab.Screen
         name="Perfil"
         component={ProfileScreen}
+        options={{
+          tabBarIcon: ({ color }) => <Icon name="account" color={color} size={28} />,
+        }}
+      />
+    </Tab.Navigator>
+  );
+}
+
+function PetPalTabs() {
+  const insets = useSafeAreaInsets();
+  return (
+    <Tab.Navigator
+      screenOptions={{
+        headerShown: false,
+        tabBarActiveTintColor: '#6FCF97',
+        tabBarInactiveTintColor: '#BDBDBD',
+        tabBarStyle: {
+          backgroundColor: '#E8F6EF',
+          borderTopWidth: 0,
+          height: 50 + insets.bottom,
+          paddingBottom: insets.bottom,
+        },
+        tabBarLabelStyle: { fontSize: 13, marginBottom: 6 },
+      }}
+    >
+      <Tab.Screen
+        name="Inicio"
+        component={PetPalHomeScreen}
+        options={{
+          tabBarIcon: ({ color }) => <Icon name="home" color={color} size={28} />,
+        }}
+      />
+      <Tab.Screen
+        name="Solicitudes"
+        component={PetPalRequestScreen}
+        options={{
+          tabBarIcon: ({ color }) => <Icon name="clipboard-list" color={color} size={28} />,
+        }}
+      />
+      <Tab.Screen
+        name="Perfil"
+        component={PetPalProfileScreen}
         options={{
           tabBarIcon: ({ color }) => <Icon name="account" color={color} size={28} />,
         }}
