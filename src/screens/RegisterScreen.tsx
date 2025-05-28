@@ -1,12 +1,12 @@
 import React, { useRef, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Keyboard, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Keyboard, ScrollView, KeyboardAvoidingView, Platform, StatusBar } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { colors } from '../themes/colors';
 import { commonStyles } from '../themes/commonStyles';
 import ModalSelector from 'react-native-modal-selector';
 import { registerUser } from '../services/auth';
 import { saveToken } from '../storage/token';
-
+import ScreenHeader from '../components/ScreenHeader';
 
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation';
@@ -39,60 +39,55 @@ export default function RegisterScreen({ navigation }: Props) {
   const telefonoRef = useRef<TextInput>(null);
   const ciudadRef = useRef<TextInput>(null);
 
-
-
-const handleRegister = async () => {
-  if (
-    !email.trim() ||
-    !nombre.trim() ||
-    !password.trim() ||
-    !repeatPassword.trim() ||
-    !dni.trim() ||
-    !direccion.trim() ||
-    !provincia.trim() ||
-    !barrio.trim() ||
-    !telefono.trim() ||
-    !ciudad.trim()
-  ) {
-    Alert.alert('Error', 'Completa todos los campos');
-    return;
-  }
-
-  if (password !== repeatPassword) {
-    Alert.alert('Error', 'Las contraseñas no coinciden');
-    return;
-  }
-
-  try {
-    const apiRole = rol === 'trabajador' ? 'petpal' : 'client';
-
-    const res = await registerUser(
-      nombre,
-      email,
-      password,
-      apiRole,
-      dni,
-      direccion,
-      barrio,    
-      telefono,  
-      ciudad     
-    );
-
-    await saveToken(res.token); // ✅ guardamos el token
-    Alert.alert('¡Registro exitoso!', `Bienvenido/a ${res.user.name}`);
-
-    // Redirige según el rol:
-    if (res.user.role === 'petpal') {
-      navigation.replace('PetPalHome');
-    } else {
-      navigation.replace('Home');
+  const handleRegister = async () => {
+    if (
+      !email.trim() ||
+      !nombre.trim() ||
+      !password.trim() ||
+      !repeatPassword.trim() ||
+      !dni.trim() ||
+      !direccion.trim() ||
+      !provincia.trim() ||
+      !barrio.trim() ||
+      !telefono.trim() ||
+      !ciudad.trim()
+    ) {
+      Alert.alert('Error', 'Completa todos los campos');
+      return;
     }
-  } catch (error: any) {
-    Alert.alert('Error en el registro', error.message || 'Intentalo más tarde');
-  }
-};
 
+    if (password !== repeatPassword) {
+      Alert.alert('Error', 'Las contraseñas no coinciden');
+      return;
+    }
 
+    try {
+      const apiRole = rol === 'trabajador' ? 'petpal' : 'client';
+
+      const res = await registerUser(
+        nombre,
+        email,
+        password,
+        apiRole,
+        dni,
+        direccion,
+        barrio,    
+        telefono,  
+        ciudad     
+      );
+
+      await saveToken(res.token);
+      Alert.alert('¡Registro exitoso!', `Bienvenido/a ${res.user.name}`);
+
+      if (res.user.role === 'petpal') {
+        navigation.replace('PetPalHome');
+      } else {
+        navigation.replace('Home');
+      }
+    } catch (error: any) {
+      Alert.alert('Error en el registro', error.message || 'Intentalo más tarde');
+    }
+  };
 
   const ROLES = [
     { key: 'trabajador', label: 'PetPal' },
@@ -106,21 +101,19 @@ const handleRegister = async () => {
 
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1 }}
+      style={{ flex: 1, backgroundColor: colors.background }}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 120 : 120} // Aumenta el offset
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
     >
+      <View style={{ height: Platform.OS === 'ios' ? 48 : StatusBar.currentHeight || 24 }} />
       <ScrollView
-        contentContainerStyle={styles.container}
+        contentContainerStyle={{ padding: 18, backgroundColor: '#F6FFF8' }} 
         keyboardShouldPersistTaps="handled"
-        scrollEnabled
+        showsVerticalScrollIndicator={false}
       >
-        {/* Icono principal centrado */}
-        <Icon name="paw" size={48} color={colors.primary} style={{ alignSelf: 'center', marginBottom: 8 }} />
+        <ScreenHeader title="Registro" subtitle='Crea cuenta' />
 
         <View style={{ marginBottom: 10 }}>
-          {/* Selector de tipo de usuario */}
-          <Text style={[styles.label, { marginTop: 0, fontWeight: 'bold', fontSize: 18 }]}>Tipo de usuario</Text>
           <ModalSelector
             data={ROLES}
             initValue="Selecciona tu tipo de usuario"
@@ -156,6 +149,11 @@ const handleRegister = async () => {
             returnKeyType="next"
             blurOnSubmit={false}
             onSubmitEditing={() => emailRef.current?.focus()}
+            autoComplete="off"
+            textContentType="none"
+            importantForAutofill="no"
+            autoCorrect={false}
+            autoCapitalize="words"
           />
           <TextInput
             ref={emailRef}
@@ -169,6 +167,10 @@ const handleRegister = async () => {
             returnKeyType="next"
             blurOnSubmit={false}
             onSubmitEditing={() => passwordRef.current?.focus()}
+            autoComplete="off"
+            textContentType="none"
+            importantForAutofill="no"
+            autoCorrect={false}
           />
           <TextInput
             ref={passwordRef}
@@ -181,6 +183,11 @@ const handleRegister = async () => {
             returnKeyType="next"
             blurOnSubmit={false}
             onSubmitEditing={() => repeatPasswordRef.current?.focus()}
+            autoComplete="off"
+            textContentType="none"
+            importantForAutofill="no"
+            autoCorrect={false}
+            autoCapitalize="none"
           />
           <TextInput
             ref={repeatPasswordRef}
@@ -193,6 +200,11 @@ const handleRegister = async () => {
             returnKeyType="next"
             blurOnSubmit={false}
             onSubmitEditing={() => dniRef.current?.focus()}
+            autoComplete="off"
+            textContentType="none"
+            importantForAutofill="no"
+            autoCorrect={false}
+            autoCapitalize="none"
           />
           <TextInput
             ref={dniRef}
@@ -205,6 +217,11 @@ const handleRegister = async () => {
             returnKeyType="next"
             blurOnSubmit={false}
             onSubmitEditing={() => direccionRef.current?.focus()}
+            autoComplete="off"
+            textContentType="none"
+            importantForAutofill="no"
+            autoCorrect={false}
+            autoCapitalize="none"
           />
           <TextInput
             ref={direccionRef}
@@ -216,6 +233,11 @@ const handleRegister = async () => {
             returnKeyType="next"
             blurOnSubmit={false}
             onSubmitEditing={() => provinciaRef.current?.focus()}
+            autoComplete="off"
+            textContentType="none"
+            importantForAutofill="no"
+            autoCorrect={false}
+            autoCapitalize="words"
           />
           <TextInput
             ref={provinciaRef}
@@ -227,6 +249,11 @@ const handleRegister = async () => {
             returnKeyType="next"
             blurOnSubmit={false}
             onSubmitEditing={() => barrioRef.current?.focus()}
+            autoComplete="off"
+            textContentType="none"
+            importantForAutofill="no"
+            autoCorrect={false}
+            autoCapitalize="words"
           />
           <TextInput
             ref={barrioRef}
@@ -238,6 +265,11 @@ const handleRegister = async () => {
             returnKeyType="next"
             blurOnSubmit={false}
             onSubmitEditing={() => telefonoRef.current?.focus()}
+            autoComplete="off"
+            textContentType="none"
+            importantForAutofill="no"
+            autoCorrect={false}
+            autoCapitalize="words"
           />
           <TextInput
             ref={telefonoRef}
@@ -250,6 +282,11 @@ const handleRegister = async () => {
             returnKeyType="next"
             blurOnSubmit={false}
             onSubmitEditing={() => ciudadRef.current?.focus()}
+            autoComplete="off"
+            textContentType="none"
+            importantForAutofill="no"
+            autoCorrect={false}
+            autoCapitalize="none"
           />
           <TextInput
             ref={ciudadRef}
@@ -261,6 +298,11 @@ const handleRegister = async () => {
             returnKeyType="done"
             blurOnSubmit={true}
             onSubmitEditing={() => Keyboard.dismiss()}
+            autoComplete="off"
+            textContentType="none"
+            importantForAutofill="no"
+            autoCorrect={false}
+            autoCapitalize="words"
           />
         </View>
 
@@ -274,12 +316,42 @@ const handleRegister = async () => {
 }
 
 const styles = StyleSheet.create({
-  container: { flexGrow: 1, backgroundColor: colors.background, justifyContent: 'center', padding: 16 },
-  label: {
-    color: '#22223B',
-    fontSize: 16,
+  container: { flexGrow: 1, backgroundColor: '#F6FFF8', justifyContent: 'center', padding: 18 },
+  label: { fontWeight: 'bold', marginTop: 16, marginBottom: 4, color: '#22223B' },
+  input: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 12,
     marginBottom: 8,
+    fontSize: 16,
+    color: '#22223B',
+    borderWidth: 1,
+    borderColor: '#6FCF97'
+  },
+  button: {
+    backgroundColor: '#6FCF97',
+    borderRadius: 20,
+    paddingVertical: 14,
+    alignItems: 'center',
     marginTop: 16,
-    alignSelf: 'flex-start',
+    marginBottom: 24
+  },
+  buttonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 18,
+    marginTop: 8,
+    justifyContent: 'space-between',
+  },
+  backBtn: {
+    padding: 4,
+  },
+  headerTitle: {
+    flex: 1,
+    textAlign: 'center',
+    fontSize: 24,
+    color: '#219653',
+    fontWeight: 'bold',
   },
 });
