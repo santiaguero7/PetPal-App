@@ -18,11 +18,11 @@ export default function LoginScreen({ navigation }: Props) {
   const [password, setPassword] = useState('');
   const passwordRef = useRef<TextInput>(null);
 
-  // Función que maneja el login 
+  
   const handleLogin = async () => {
     try {
+      console.log('Intentando iniciar sesión con email:', email); // Log para saber que la función se llamó
       const res = await loginUser(email, password);
-      console.log('RESPUESTA REGISTRO:', res); // <-- Esto va en tu código, NO en la terminal
       await saveToken(res.token);
 
       // Redirige según el rol:

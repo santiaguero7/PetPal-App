@@ -83,7 +83,7 @@ const handleRegister = async () => {
 
     // Redirige según el rol:
     if (res.user.role === 'petpal') {
-      navigation.replace('PetPalHome'); // O 'PetPalTabs' si usás tabs
+      navigation.replace('PetPalHome');
     } else {
       navigation.replace('Home');
     }
