@@ -1,5 +1,14 @@
 import React, { useRef, useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, TouchableOpacity, Keyboard, KeyboardAvoidingView, ScrollView, Platform, Alert } from 'react-native';
+import {
+  Text,
+  TextInput,
+  Button,
+  TouchableOpacity,
+  Keyboard,
+  Platform,
+  Alert,
+} from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation';
 import { colors } from '../themes/colors';
@@ -8,24 +17,17 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { loginUser } from '../services/auth';
 import { saveToken } from '../storage/token';
 
-
-// Define los props del componente usando tipos de React Navigation
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
 export default function LoginScreen({ navigation }: Props) {
-  // Estados para manejar el email y contraseña
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const passwordRef = useRef<TextInput>(null);
 
-  
   const handleLogin = async () => {
     try {
-      console.log('Intentando iniciar sesión con email:', email); // Log para saber que la función se llamó
       const res = await loginUser(email, password);
       await saveToken(res.token);
-
-      // Redirige según el rol:
       if (res.user.role === 'petpal') {
         navigation.replace('PetPalHome');
       } else {
@@ -37,79 +39,77 @@ export default function LoginScreen({ navigation }: Props) {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}
+    <KeyboardAwareScrollView
+      style={{ flex: 1, backgroundColor: '#F6FFF8' }}
+      contentContainerStyle={{
+        flexGrow: 1,
+        justifyContent: 'flex-start', 
+        paddingTop: 150, 
+        paddingHorizontal: 24,
+        paddingBottom: 24,
+      }}
+      keyboardShouldPersistTaps="handled"
+      enableOnAndroid={true}
+      extraScrollHeight={Platform.OS === 'ios' ? 20 : 20}
     >
-      <ScrollView
-        contentContainerStyle={[commonStyles.container, { justifyContent: 'center', flexGrow: 1, paddingTop: 10}]}
-        keyboardShouldPersistTaps="handled"
+      <Icon
+        name="paw"
+        size={60}
+        color={colors.primary}
+        style={{ alignSelf: 'center', marginBottom: 8 }}
+      />
+
+      <Text
+        style={{
+          fontSize: 48,
+          color: colors.primary,
+          fontWeight: 'bold',
+          textAlign: 'center',
+          marginBottom: 24,
+          fontFamily: 'System',
+        }}
       >
-        {/* Icono decorativo */}
-        <Icon name="paw" size={60} color={colors.primary} style={{ alignSelf: 'center', marginBottom: 8 }} />
+        PetPal
+      </Text>
 
-        {/* Título grande y centrado */}
-        <Text
-          style={{
-            fontSize: 48,
-            color: colors.primary,
-            fontWeight: 'bold',
-            textAlign: 'center',
-            marginBottom: 24,
-            fontFamily: 'System',
-          }}
-        >
-          PetPal
-        </Text>
+      <Text style={[commonStyles.label, { color: colors.secondary }]}>Correo</Text>
+      <TextInput
+        style={commonStyles.input}
+        placeholder="Ingresá tu correo"
+        value={email}
+        onChangeText={setEmail}
+        keyboardType="email-address"
+        autoCapitalize="none"
+        placeholderTextColor={colors.muted}
+        returnKeyType="next"
+        blurOnSubmit={false}
+        onSubmitEditing={() => passwordRef.current?.focus()}
+        autoCorrect={false}
+      />
 
-        {/* Input para email */}
-        <Text style={commonStyles.label}>Correo</Text>
-        <TextInput
-          style={commonStyles.input}
-          placeholder="Ingresá tu correo"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          placeholderTextColor={colors.muted}
-          returnKeyType="next"
-          blurOnSubmit={false}
-          onSubmitEditing={() => passwordRef.current?.focus()}
-          autoCorrect={false}
-          autoFocus={false}
-        />
+      <Text style={[commonStyles.label, { color: colors.secondary }]}>Contraseña</Text>
+      <TextInput
+        ref={passwordRef}
+        style={commonStyles.input}
+        placeholder="Ingresá tu contraseña"
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+        placeholderTextColor={colors.muted}
+        returnKeyType="done"
+        onSubmitEditing={() => Keyboard.dismiss()}
+        autoCorrect={false}
+      />
 
-        {/* Input para contraseña */}
-        <Text style={commonStyles.label}>Contraseña</Text>
-        <TextInput
-          ref={passwordRef}
-          style={commonStyles.input}
-          placeholder="Ingresá tu contraseña"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          placeholderTextColor={colors.muted}
-          returnKeyType="done"
-          blurOnSubmit={true}
-          onSubmitEditing={() => Keyboard.dismiss()}
-          autoCorrect={false}
-          autoFocus={false}
-        />
+      <TouchableOpacity style={commonStyles.button} onPress={handleLogin}>
+        <Text style={commonStyles.buttonText}>Entrar</Text>
+      </TouchableOpacity>
 
-        {/* Botón de login */}
-        <TouchableOpacity style={commonStyles.button} onPress={handleLogin}>
-          <Text style={commonStyles.buttonText}>Entrar</Text>
-        </TouchableOpacity>
-
-        {/* Botón para redirigir a registro */}
-        <Button
-          title="¿No tienes cuenta? Regístrate"
-          color={colors.secondary}
-          onPress={() => navigation.navigate('Register')}
-        />
-      </ScrollView>
-    </KeyboardAvoidingView>
+      <Button
+        title="¿No tienes cuenta? Regístrate"
+        color={colors.secondary}
+        onPress={() => navigation.navigate('Register')}
+      />
+    </KeyboardAwareScrollView>
   );
 }
-

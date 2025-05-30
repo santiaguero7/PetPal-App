@@ -6,13 +6,13 @@ import { commonStyles } from '../themes/commonStyles';
 import { colors } from '../themes/colors';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
-import type { RootStackParamList, TabParamList } from '../navigation';
+import type { RootStackParamList, MainTabParamList } from '../navigation';
 import { usePets } from '../context/PetsContext';
 import PetCard from '../components/PetCard';
 import PetForm from '../components/PetForm';
 import ScreenHeader from '../components/ScreenHeader';
 import { getUserById } from '../services/users';
-import { getToken } from '../storage/token';
+import { getToken, removeToken } from '../storage/token';
 import { jwtDecode } from 'jwt-decode';
 
 
@@ -37,8 +37,8 @@ const RAZAS_GATO = [
   { key: 3, label: 'Persa' },
 ];
 
-type ProfileScreenNavigationProp = BottomTabScreenProps<TabParamList, 'Perfil'> & {
-  navigation: BottomTabScreenProps<TabParamList, 'Perfil'>['navigation'] &
+type ProfileScreenNavigationProp = BottomTabScreenProps<MainTabParamList, 'Perfil'> & {
+  navigation: BottomTabScreenProps<MainTabParamList, 'Perfil'>['navigation'] &
   StackNavigationProp<RootStackParamList>;
 };
 type Props = ProfileScreenNavigationProp;
@@ -97,10 +97,21 @@ export default function ProfileScreen({ navigation }: Props) {
   });
 
   const handleLogout = () => {
-    Alert.alert('Cerrar sesión', '¿Seguro que quieres salir?', [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Cerrar sesión', style: 'destructive', onPress: () => navigation.reset({ index: 0, routes: [{ name: 'Login' }] }) }
-    ]);
+    Alert.alert(
+      'Cerrar sesión',
+      '¿Seguro que quieres cerrar sesión?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Cerrar sesión',
+          style: 'destructive',
+          onPress: async () => {
+            await removeToken?.();
+            navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+          }
+        }
+      ]
+    );
   };
 
   const handleEditPet = () => {
