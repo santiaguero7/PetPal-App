@@ -30,6 +30,7 @@ export const PetsProvider: React.FC<{ children: React.ReactNode }> = ({ children
       tamano: 'grande',
       raza: 'Labrador',
       edad: '5',
+      descripcion: '', 
     },
     {
       id: '2',
@@ -38,6 +39,7 @@ export const PetsProvider: React.FC<{ children: React.ReactNode }> = ({ children
       tamano: 'chica',
       raza: 'Sin especificar',
       edad: '2',
+      descripcion: '',
     },
   ]);
 
@@ -45,7 +47,7 @@ export const PetsProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const addPet = (pet: Omit<Pet, 'id'>) => {
     setPets(prev => [
       ...prev,
-      { ...pet, id: (Date.now() + Math.random()).toString() }
+      { ...pet, descripcion: pet.descripcion || '', id: (Date.now() + Math.random()).toString() }
     ]);
   };
 

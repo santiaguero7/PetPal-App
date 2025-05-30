@@ -70,6 +70,7 @@ export default function AddPetScreen({ navigation }: Props) {
         tamano: especie === 'Perro' ? tamano : 'mediana',
         raza: especie === 'Perro' ? (raza || '') : '',
         edad,
+        descripcion, 
       });
       navigation.goBack();
     } else {
