@@ -17,3 +17,22 @@ export const getAllPetpals = async () => {
 
   return response.data; // array de petpals
 };
+
+export const searchPetpalsByMascota = async (
+  mascotaId: number,
+  location: string,
+  serviceType: string
+) => {
+  const token = await getToken();
+  const response = await api.get(`/petpals/search/${mascotaId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    params: {
+      location,
+      service_type: serviceType,
+    },
+  });
+  return response.data.data;
+};
+

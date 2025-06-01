@@ -2,22 +2,44 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { colors } from '../themes/colors';
 
+// Adaptado para aceptar tanto claves en español como en inglés
+
 type Props = {
-  nombre: string;
-  especie: string;
+  nombre?: string;
+  name?: string;
+  especie?: string;
+  pet_type?: 'dog' | 'cat';
   tamano?: string;
+  breed?: string;
   raza?: string;
-  edad: string;
+  edad?: string | number;
+  age?: number;
   descripcion?: string;
 };
 
-export default function PetCard({ nombre, especie, tamano, raza, edad, descripcion }: Props) {
+export default function PetCard({
+  nombre,
+  name,
+  especie,
+  pet_type,
+  tamano,
+  breed,
+  raza,
+  edad,
+  age,
+  descripcion
+}: Props) {
+  const mostrarNombre = nombre || name || 'Mascota';
+  const mostrarEspecie = especie || (pet_type === 'dog' ? 'Perro' : pet_type === 'cat' ? 'Gato' : '');
+  const mostrarRaza = raza || breed;
+  const mostrarEdad = edad || age || '?';
+
   return (
     <View style={styles.card}>
-      <Text style={styles.nombre}>{nombre} ({especie})</Text>
+      <Text style={styles.nombre}>{mostrarNombre} ({mostrarEspecie})</Text>
       {tamano && <Text style={styles.info}>Tamaño: {tamano}</Text>}
-      {raza && <Text style={styles.info}>Raza: {raza}</Text>}
-      <Text style={styles.info}>Edad: {edad} años</Text>
+      {mostrarRaza && <Text style={styles.info}>Raza: {mostrarRaza}</Text>}
+      <Text style={styles.info}>Edad: {mostrarEdad} años</Text>
       {descripcion ? (
         <Text style={styles.descripcion}>{descripcion}</Text>
       ) : null}

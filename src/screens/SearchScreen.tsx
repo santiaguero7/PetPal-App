@@ -1,10 +1,14 @@
 import React, { useState, useContext } from 'react';
+import { useEffect } from 'react';
+import { getAllPetpals } from '../services/petpals';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '../themes/colors';
 import ScreenHeader from '../components/ScreenHeader';
 import { PetsContext } from '../context/PetsContext';
+import { searchPetpalsByMascota } from '../services/petpals';
+
 
 // Simula datos de cuidadores
 const caretakers = [
@@ -60,16 +64,38 @@ export default function SearchScreen({ navigation }: SearchScreenProps) {
   const [servicioSeleccionado, setServicioSeleccionado] = useState('');
   const [showMascotas, setShowMascotas] = useState(false);
   const [showServicios, setShowServicios] = useState(false);
+  const [petpals, setPetpals] = useState<any[]>([]);
+  
+  useEffect(() => {
+    const fetchPetpals = async () => {
+      try {
+        const data = await getAllPetpals();
+        setPetpals(data);
+      } catch (error) {
+        console.error('Error cargando PetPals:', error);
+      }
+    };
+
+    fetchPetpals();
+  }, []);
+
+
 
   const mascota = pets.find(m => m.id === mascotaSeleccionada);
 
   // Filtrado por mascota, servicio y ubicación
-  const filteredCaretakers = caretakers.filter((c) => {
-    const matchesServicio = servicioSeleccionado ? c.servicios.includes(servicioSeleccionado) : true;
-    const matchesUbicacion = !ubicacion || c.ubicacion.toLowerCase().includes(ubicacion.toLowerCase());
-    const matchesEspecie = !mascota || c.especies.includes(mascota.especie);
+  const filteredCaretakers = petpals.filter((c) => {
+    const matchesServicio = servicioSeleccionado
+      ? (servicioSeleccionado === 'Paseo de perros' && c.service_type === 'dog walker') ||
+      (servicioSeleccionado === 'Cuidado en casa' && c.service_type === 'caregiver')
+      : true;
+
+    const matchesUbicacion = !ubicacion || c.location.toLowerCase().includes(ubicacion.toLowerCase());
+    const matchesEspecie = !mascota || c.pet_type === mascota.especie.toLowerCase();
+
     return matchesServicio && matchesUbicacion && matchesEspecie;
   });
+
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['top']}>
@@ -179,18 +205,19 @@ export default function SearchScreen({ navigation }: SearchScreenProps) {
             <View key={c.id} style={styles.caretakerCard}>
               <Icon name="account" size={32} color={colors.primary} style={{ marginRight: 12 }} />
               <View style={{ flex: 1 }}>
-                <Text style={styles.caretakerName}>{c.nombre}</Text>
-                <Text style={styles.caretakerInfo}>{c.experiencia} • {c.distancia} • {c.ubicacion}</Text>
-                <Text style={styles.caretakerServices}>{c.servicios.join(', ')}</Text>
-                <TouchableOpacity
-                  style={[styles.tabBtn, { marginTop: 8, alignSelf: 'flex-start' }]}
-                  onPress={() => Alert.alert('Solicitud enviada', `Solicitaste a ${c.nombre} para tu mascota ${mascota?.nombre}`)}
-                >
-                  <Text style={styles.tabBtnText}>Solicitar</Text>
-                </TouchableOpacity>
+                <Text style={styles.caretakerName}>
+                  {c.service_type === 'dog walker' ? 'Paseador' : 'Cuidador'} en {c.location}
+                </Text>
+                <Text style={styles.caretakerInfo}>
+                  {c.experience}
+                </Text>
+                <Text style={styles.caretakerServices}>
+                  💰 {c.price_per_hour ? `$${c.price_per_hour}/h` : `$${c.price_per_day}/día`} • 🐾 {c.pet_type === 'dog' ? 'Perros' : 'Gatos'}
+                </Text>
               </View>
             </View>
           ))}
+
         </View>
       </ScrollView>
     </SafeAreaView>

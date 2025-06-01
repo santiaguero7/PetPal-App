@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'; 
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -7,34 +7,22 @@ import { colors } from '../themes/colors';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { RootStackParamList, MainTabParamList } from '../navigation';
-import { usePets } from '../context/PetsContext';
 import PetCard from '../components/PetCard';
 import PetForm from '../components/PetForm';
 import ScreenHeader from '../components/ScreenHeader';
 import { getUserById } from '../services/users';
 import { getToken, removeToken } from '../storage/token';
 import { jwtDecode } from 'jwt-decode';
+import { getMyPets, updatePetById, deletePetById } from '../services/pets';
+import { RefreshControl } from 'react-native';
 
 
-// Opciones para selects (definidas aquí)
-const ESPECIES = [
-  { key: 'Perro', label: 'Perro' },
-  { key: 'Gato', label: 'Gato' },
-];
-const TAMANOS = [
-  { key: 'chica', label: 'Chica' },
-  { key: 'mediana', label: 'Mediana' },
-  { key: 'grande', label: 'Grande' },
-];
-const RAZAS_PERRO = [
-  { key: 1, label: 'Labrador' },
-  { key: 2, label: 'Golden Retriever' },
-  { key: 3, label: 'Bulldog' },
-];
-const RAZAS_GATO = [
-  { key: 1, label: 'Maine Coon' },
-  { key: 2, label: 'Siames' },
-  { key: 3, label: 'Persa' },
+const menuItems = [
+  { icon: 'account-cog', label: 'Configuración de cuenta' },
+  { icon: 'credit-card', label: 'Métodos de pago' },
+  { icon: 'heart', label: 'Favoritos' },
+  { icon: 'help-circle', label: 'Centro de ayuda' },
+  { icon: 'cog', label: 'Preferencias' },
 ];
 
 type ProfileScreenNavigationProp = BottomTabScreenProps<MainTabParamList, 'Perfil'> & {
@@ -43,113 +31,131 @@ type ProfileScreenNavigationProp = BottomTabScreenProps<MainTabParamList, 'Perfi
 };
 type Props = ProfileScreenNavigationProp;
 
-
-
-
-const menuItems = [
-  { icon: 'account-cog', label: "Configuración de cuenta" },
-  { icon: 'credit-card', label: "Métodos de pago" },
-  { icon: 'heart', label: "Favoritos" },
-  { icon: 'help-circle', label: "Centro de ayuda" },
-  { icon: 'cog', label: "Preferencias" },
-];
-
 export default function ProfileScreen({ navigation }: Props) {
-
   const [user, setUser] = useState<any>(null);
+  const [pets, setPets] = useState<any[]>([]);
+  const [selectedPet, setSelectedPet] = useState<any>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [editValues, setEditValues] = useState<any>({
+    name: '',
+    breed: '',
+    age: 0,
+    weight: null,
+    pet_type: 'dog'
+  });
+
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const token = await getToken();
-        if (!token) {
-          console.warn('No hay token disponible');
-          return;
-        }
-
+        if (!token) return;
         const decoded: any = jwtDecode(token);
-        const userId = decoded.id;
-        const userData = await getUserById(userId);
+        const userData = await getUserById(decoded.id);
         setUser(userData);
       } catch (error) {
         console.error('Error cargando usuario:', error);
       }
     };
-
     fetchUser();
   }, []);
-  const { pets, editPet, removePet } = usePets();
-  const [selectedPet, setSelectedPet] = useState<any>(null);
-  const [editMode, setEditMode] = useState(false);
-  const [editValues, setEditValues] = useState<{
-    nombre: string;
-    especie: string;
-    tamano: 'chica' | 'mediana' | 'grande';
-    raza: string;
-    edad: string;
-    descripcion: string;
-  }>({
-    nombre: '',
-    especie: '',
-    tamano: 'mediana',
-    raza: '',
-    edad: '',
-    descripcion: '',
-  });
+  const loadPets = async () => {
+    try {
+      const data = await getMyPets();
+      setPets(data);
+    } catch (error) {
+      console.error('Error trayendo mascotas del usuario:', error);
+    }
+  };
+
+  useEffect(() => {
+    loadPets();
+  }, []);
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadPets();
+    setRefreshing(false);
+  };
+
+
+
+  useEffect(() => {
+    const fetchPets = async () => {
+      try {
+        const data = await getMyPets();
+        setPets(data);
+      } catch (error) {
+        console.error('Error trayendo mascotas del usuario:', error);
+      }
+    };
+    fetchPets();
+  }, []);
 
   const handleLogout = () => {
-    Alert.alert(
-      'Cerrar sesión',
-      '¿Seguro que quieres cerrar sesión?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Cerrar sesión',
-          style: 'destructive',
-          onPress: async () => {
-            await removeToken?.();
-            navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
-          }
-        }
-      ]
-    );
+    Alert.alert('Cerrar sesión', '¿Seguro que quieres cerrar sesión?', [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Cerrar sesión',
+        style: 'destructive',
+        onPress: async () => {
+          await removeToken?.();
+          navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+        },
+      },
+    ]);
   };
 
-  const handleEditPet = () => {
+  const handleEditPet = async () => {
     if (!selectedPet) return;
-    editPet(selectedPet.id, editValues);
-    setEditMode(false);
-    setSelectedPet(null);
+    try {
+      await updatePetById(selectedPet.id, editValues);
+      const updatedPets = await getMyPets();
+      setPets(updatedPets);
+      setEditMode(false);
+      setSelectedPet(null);
+    } catch (error) {
+      console.error('Error actualizando mascota:', error);
+    }
   };
 
-  const handleDeletePet = () => {
+  const handleDeletePet = async () => {
     if (!selectedPet) return;
-    Alert.alert(
-      'Eliminar mascota',
-      '¿Seguro que quieres eliminar esta mascota?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Eliminar', style: 'destructive', onPress: () => {
-            removePet(selectedPet.id);
+    Alert.alert('Eliminar mascota', '¿Seguro que quieres eliminar esta mascota?', [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Eliminar',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await deletePetById(selectedPet.id);
+            const updatedPets = await getMyPets();
+            setPets(updatedPets);
             setEditMode(false);
             setSelectedPet(null);
+          } catch (error) {
+            console.error('Error eliminando mascota:', error);
           }
-        }
-      ]
-    );
+        },
+      },
+    ]);
   };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['top']}>
-      <ScrollView contentContainerStyle={{ padding: 18, backgroundColor: colors.background }}>
+      <ScrollView
+        contentContainerStyle={{ padding: 18 }}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
+
         <ScreenHeader title="Mi Perfil" subtitle="Registra tus mascotas y tus datos" />
+
         <View style={styles.profileCard}>
           <View style={styles.profileHeader} />
           <View style={styles.avatarBox}>
             <View style={styles.avatar}>
-              <Text style={styles.avatarText}>
-                {user?.name?.substring(0, 2).toUpperCase() || 'US'}
-              </Text>
+              <Text style={styles.avatarText}>{user?.name?.substring(0, 2).toUpperCase() || 'US'}</Text>
             </View>
           </View>
           <View style={styles.profileInfo}>
@@ -161,7 +167,6 @@ export default function ProfileScreen({ navigation }: Props) {
           </View>
         </View>
 
-        {/* Mascotas */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Tus mascotas</Text>
@@ -170,6 +175,7 @@ export default function ProfileScreen({ navigation }: Props) {
               <Text style={styles.addPetBtnText}>Agregar</Text>
             </TouchableOpacity>
           </View>
+
           {pets.length === 0 ? (
             <Text style={{ color: colors.text, marginBottom: 12 }}>No tienes mascotas registradas.</Text>
           ) : (
@@ -180,31 +186,16 @@ export default function ProfileScreen({ navigation }: Props) {
                 onPress={() => {
                   setSelectedPet(pet);
                   setEditMode(false);
-                  setEditValues({
-                    nombre: pet.nombre,
-                    especie: pet.especie,
-                    tamano: pet.tamano as 'chica' | 'mediana' | 'grande',
-                    raza: pet.raza,
-                    edad: pet.edad,
-                    descripcion: pet.descripcion || '',
-                  });
+                  setEditValues(pet);
                 }}
                 activeOpacity={0.8}
               >
-                <PetCard
-                  nombre={pet.nombre}
-                  especie={pet.especie}
-                  tamano={pet.tamano}
-                  raza={pet.raza}
-                  edad={pet.edad}
-                  descripcion={pet.descripcion}
-                />
+                <PetCard {...pet} />
               </TouchableOpacity>
             ))
           )}
         </View>
 
-        {/* Modal para ver/editar mascota */}
         <Modal
           visible={!!selectedPet}
           transparent
@@ -218,29 +209,16 @@ export default function ProfileScreen({ navigation }: Props) {
             <View style={styles.modalFormContent}>
               {selectedPet && !editMode && (
                 <>
-                  <PetCard
-                    nombre={selectedPet.nombre}
-                    especie={selectedPet.especie}
-                    tamano={selectedPet.tamano}
-                    raza={selectedPet.raza}
-                    edad={selectedPet.edad}
-                    descripcion={selectedPet.descripcion}
-                  />
+                  <PetCard {...selectedPet} />
                   <TouchableOpacity
-                    style={[
-                      commonStyles.button,
-                      { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 0 }
-                    ]}
+                    style={[commonStyles.button, { flexDirection: 'row', justifyContent: 'center', marginBottom: 0 }]}
                     onPress={() => setEditMode(true)}
                   >
                     <Icon name="pencil" size={20} color={colors.white} style={{ marginRight: 8 }} />
                     <Text style={commonStyles.buttonText}>Editar</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    style={[
-                      commonStyles.button,
-                      { backgroundColor: '#EB5757', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 8, marginBottom: 0 }
-                    ]}
+                    style={[commonStyles.button, { backgroundColor: '#EB5757', marginTop: 8 }]}
                     onPress={handleDeletePet}
                   >
                     <Icon name="delete" size={20} color={colors.white} style={{ marginRight: 8 }} />
@@ -260,27 +238,21 @@ export default function ProfileScreen({ navigation }: Props) {
               {selectedPet && editMode && (
                 <>
                   <PetForm
-                    nombre={editValues.nombre}
-                    setNombre={v => setEditValues({ ...editValues, nombre: v })}
-                    especie={editValues.especie}
-                    setEspecie={v => setEditValues({ ...editValues, especie: v })}
-                    tamano={editValues.tamano}
-                    setTamano={v => setEditValues({ ...editValues, tamano: v as 'chica' | 'mediana' | 'grande' })}
-                    raza={editValues.raza}
-                    setRaza={v => setEditValues({ ...editValues, raza: v })}
-                    edad={editValues.edad}
-                    setEdad={v => setEditValues({ ...editValues, edad: v })}
+                    name={editValues.name}
+                    setNombre={(v: string) => setEditValues({ ...editValues, name: v })}
+                    pet_type={editValues.pet_type}
+                    setPetType={(v: 'dog' | 'cat') => setEditValues({ ...editValues, pet_type: v })}
+                    weight={editValues.weight}
+                    setPeso={(v: string) => setEditValues({ ...editValues, weight: parseFloat(v) || null })}
+                    breed={editValues.breed}
+                    setRaza={(v: string) => setEditValues({ ...editValues, breed: v })}
+                    age={editValues.age}
+                    setEdad={(v: string) => setEditValues({ ...editValues, age: parseInt(v) || 0 })}
                     descripcion={editValues.descripcion}
-                    setDescripcion={v => setEditValues({ ...editValues, descripcion: v })}
-                    ESPECIES={ESPECIES}
-                    TAMANOS={TAMANOS}
-                    RAZAS_PERRO={RAZAS_PERRO}
-                    RAZAS_GATO={RAZAS_GATO}
-                    styles={{
-                      input: commonStyles.input,
-                      label: commonStyles.label,
-                    }}
+                    setDescripcion={(v: string) => setEditValues({ ...editValues, descripcion: v })}
+                    styles={{ input: commonStyles.input, label: commonStyles.label }}
                   />
+
                   <TouchableOpacity
                     style={[commonStyles.button, { backgroundColor: colors.primary, marginTop: 8 }]}
                     onPress={handleEditPet}
@@ -299,7 +271,6 @@ export default function ProfileScreen({ navigation }: Props) {
           </View>
         </Modal>
 
-        {/* Menú de usuario */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Ajustes</Text>
           <View style={styles.menuCard}>
@@ -327,6 +298,8 @@ export default function ProfileScreen({ navigation }: Props) {
     </SafeAreaView>
   );
 }
+
+
 
 const styles = StyleSheet.create({
   profileCard: {
