@@ -1,27 +1,28 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Alert, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Alert, Platform, TouchableOpacity } from 'react-native';
 import PetForm from '../components/PetForm';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { getMyPets, updatePetById, deletePetById, createPet } from '../services/pets';
+import { createPet } from '../services/pets';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 export default function AddPetScreen({ navigation }: NativeStackScreenProps<RootStackParamList, 'AddPet'>) {
-const [formValues, setFormValues] = useState<{
-  name: string;
-  pet_type: 'dog' | 'cat';
-  weight: number | null; // 👈 este tipo es importante
-  breed: string;
-  age: number;
-  descripcion?: string;
-}>({
-  name: '',
-  pet_type: 'dog',
-  weight: null,
-  breed: '',
-  age: 0,
-  descripcion: '',
-});
+  const [formValues, setFormValues] = useState<{
+    name: string;
+    pet_type: 'dog' | 'cat';
+    weight: number | null; // 👈 este tipo es importante
+    breed: string;
+    age: number;
+    descripcion?: string;
+  }>({
+    name: '',
+    pet_type: 'dog',
+    weight: null,
+    breed: '',
+    age: 0,
+    descripcion: '',
+  });
 
 
   const handleSubmit = async () => {
@@ -42,41 +43,46 @@ const [formValues, setFormValues] = useState<{
   };
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={styles.container}>
-        <View style={styles.headerRow}>
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={styles.backBtn}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Icon name="arrow-left" size={26} color="#219653" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Agregar Mascota</Text>
-          <View style={{ width: 26 }} />
-        </View>
-
-        <PetForm
-          name={formValues.name}
-          setNombre={(v) => setFormValues({ ...formValues, name: v })}
-          pet_type={formValues.pet_type}
-          setPetType={(v) => setFormValues({ ...formValues, pet_type: v })}
-          weight={formValues.weight}
-          setPeso={(v) => setFormValues({ ...formValues, weight: parseFloat(v) || null })}
-          breed={formValues.breed}
-          setRaza={(v) => setFormValues({ ...formValues, breed: v })}
-          age={formValues.age}
-          setEdad={(v) => setFormValues({ ...formValues, age: parseInt(v) || 0 })}
-          descripcion={formValues.descripcion}
-          setDescripcion={(v) => setFormValues({ ...formValues, descripcion: v })}
-          styles={styles}
-        />
-
-        <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-          <Text style={styles.buttonText}>Guardar</Text>
+    <KeyboardAwareScrollView
+      style={{ flex: 1, backgroundColor: '#F6FFF8' }}
+      contentContainerStyle={styles.container}
+      keyboardShouldPersistTaps="handled"
+      enableOnAndroid={true}
+      extraScrollHeight={Platform.OS === 'ios' ? 20 : 20}
+      showsVerticalScrollIndicator={false}
+    >
+      <View style={styles.headerRow}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backBtn}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <Icon name="arrow-left" size={26} color="#219653" />
         </TouchableOpacity>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        <Text style={styles.headerTitle}>Agregar Mascota</Text>
+        <View style={{ width: 26 }} />
+      </View>
+
+      <PetForm
+        name={formValues.name}
+        setNombre={(v) => setFormValues({ ...formValues, name: v })}
+        pet_type={formValues.pet_type}
+        setPetType={(v) => setFormValues({ ...formValues, pet_type: v })}
+        weight={formValues.weight}
+        setPeso={(v) => setFormValues({ ...formValues, weight: parseFloat(v) || null })}
+        breed={formValues.breed}
+        setRaza={(v) => setFormValues({ ...formValues, breed: v })}
+        age={formValues.age}
+        setEdad={(v) => setFormValues({ ...formValues, age: parseInt(v) || 0 })}
+        descripcion={formValues.descripcion}
+        setDescripcion={(v) => setFormValues({ ...formValues, descripcion: v })}
+        styles={styles}
+      />
+
+      <TouchableOpacity style={styles.button} onPress={handleSubmit}>
+        <Text style={styles.buttonText}>Guardar</Text>
+      </TouchableOpacity>
+    </KeyboardAwareScrollView>
   );
 }
 

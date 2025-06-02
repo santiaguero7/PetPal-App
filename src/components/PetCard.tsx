@@ -1,8 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { colors } from '../themes/colors';
-
-// Adaptado para aceptar tanto claves en español como en inglés
 
 type Props = {
   nombre?: string;
@@ -15,6 +13,12 @@ type Props = {
   edad?: string | number;
   age?: number;
   descripcion?: string;
+  description?: string;
+  // Acciones opcionales:
+  onEdit?: () => void;
+  onDelete?: () => void;
+  onClose?: () => void;
+  showActions?: boolean;
 };
 
 export default function PetCard({
@@ -27,12 +31,18 @@ export default function PetCard({
   raza,
   edad,
   age,
-  descripcion
+  descripcion,
+  description,
+  onEdit,
+  onDelete,
+  onClose,
+  showActions = false,
 }: Props) {
   const mostrarNombre = nombre || name || 'Mascota';
   const mostrarEspecie = especie || (pet_type === 'dog' ? 'Perro' : pet_type === 'cat' ? 'Gato' : '');
   const mostrarRaza = raza || breed;
   const mostrarEdad = edad || age || '?';
+  const mostrarDescripcion = descripcion || description;
 
   return (
     <View style={styles.card}>
@@ -40,9 +50,23 @@ export default function PetCard({
       {tamano && <Text style={styles.info}>Tamaño: {tamano}</Text>}
       {mostrarRaza && <Text style={styles.info}>Raza: {mostrarRaza}</Text>}
       <Text style={styles.info}>Edad: {mostrarEdad} años</Text>
-      {descripcion ? (
-        <Text style={styles.descripcion}>{descripcion}</Text>
+      {mostrarDescripcion ? (
+        <Text style={styles.descripcion}>{mostrarDescripcion}</Text>
       ) : null}
+
+      {showActions && (
+        <View style={styles.actionsRow}>
+          <TouchableOpacity style={styles.actionBtn} onPress={onEdit}>
+            <Text style={styles.actionText}>Editar</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.actionBtn, styles.deleteBtn]} onPress={onDelete}>
+            <Text style={[styles.actionText, styles.deleteText]}>Eliminar</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionBtn} onPress={onClose}>
+            <Text style={styles.actionText}>Cerrar</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 }
@@ -74,5 +98,30 @@ const styles = StyleSheet.create({
     color: '#555',
     marginTop: 8,
     fontStyle: 'italic',
+  },
+  actionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 16,
+  },
+  actionBtn: {
+    flex: 1,
+    marginHorizontal: 4,
+    backgroundColor: '#EAFBF2',
+    borderRadius: 8,
+    paddingVertical: 10,
+    alignItems: 'center',
+    minWidth: 70,
+  },
+  actionText: {
+    color: colors.primary || '#219653',
+    fontWeight: 'bold',
+    fontSize: 15,
+  },
+  deleteBtn: {
+    backgroundColor: '#FFEAEA',
+  },
+  deleteText: {
+    color: '#E74C3C',
   },
 });

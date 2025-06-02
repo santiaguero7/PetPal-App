@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Modal, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { commonStyles } from '../themes/commonStyles';
@@ -62,6 +62,7 @@ export default function ProfileScreen({ navigation }: Props) {
   const loadPets = async () => {
     try {
       const data = await getMyPets();
+      console.log('Mascotas recibidas:', data); // <-- Agrega esta línea
       setPets(data);
     } catch (error) {
       console.error('Error trayendo mascotas del usuario:', error);
@@ -205,70 +206,65 @@ export default function ProfileScreen({ navigation }: Props) {
             setSelectedPet(null);
           }}
         >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalFormContent}>
-              {selectedPet && !editMode && (
-                <>
-                  <PetCard {...selectedPet} />
-                  <TouchableOpacity
-                    style={[commonStyles.button, { flexDirection: 'row', justifyContent: 'center', marginBottom: 0 }]}
-                    onPress={() => setEditMode(true)}
-                  >
-                    <Icon name="pencil" size={20} color={colors.white} style={{ marginRight: 8 }} />
-                    <Text style={commonStyles.buttonText}>Editar</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[commonStyles.button, { backgroundColor: '#EB5757', marginTop: 8 }]}
-                    onPress={handleDeletePet}
-                  >
-                    <Icon name="delete" size={20} color={colors.white} style={{ marginRight: 8 }} />
-                    <Text style={commonStyles.buttonText}>Eliminar</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[commonStyles.button, { backgroundColor: colors.secondary, marginTop: 10 }]}
-                    onPress={() => {
-                      setEditMode(false);
-                      setSelectedPet(null);
-                    }}
-                  >
-                    <Text style={commonStyles.buttonText}>Cerrar</Text>
-                  </TouchableOpacity>
-                </>
-              )}
-              {selectedPet && editMode && (
-                <>
-                  <PetForm
-                    name={editValues.name}
-                    setNombre={(v: string) => setEditValues({ ...editValues, name: v })}
-                    pet_type={editValues.pet_type}
-                    setPetType={(v: 'dog' | 'cat') => setEditValues({ ...editValues, pet_type: v })}
-                    weight={editValues.weight}
-                    setPeso={(v: string) => setEditValues({ ...editValues, weight: parseFloat(v) || null })}
-                    breed={editValues.breed}
-                    setRaza={(v: string) => setEditValues({ ...editValues, breed: v })}
-                    age={editValues.age}
-                    setEdad={(v: string) => setEditValues({ ...editValues, age: parseInt(v) || 0 })}
-                    descripcion={editValues.descripcion}
-                    setDescripcion={(v: string) => setEditValues({ ...editValues, descripcion: v })}
-                    styles={{ input: commonStyles.input, label: commonStyles.label }}
-                  />
+          <TouchableWithoutFeedback
+            onPress={() => {
+              setEditMode(false);
+              setSelectedPet(null);
+            }}
+          >
+            <View style={styles.modalOverlay}>
+              <TouchableWithoutFeedback>
+                <View style={styles.modalFormContent}>
+                  {selectedPet && !editMode && (
+                    <>
+                      <PetCard
+                        {...selectedPet}
+                        showActions
+                        onEdit={() => setEditMode(true)}
+                        onDelete={handleDeletePet}
+                        onClose={() => {
+                          setEditMode(false);
+                          setSelectedPet(null);
+                        }}
+                      />
+                    </>
+                  )}
+                  {selectedPet && editMode && (
+                    <>
+                      <PetForm
+                        name={editValues.name}
+                        setNombre={(v: string) => setEditValues({ ...editValues, name: v })}
+                        pet_type={editValues.pet_type}
+                        setPetType={(v: 'dog' | 'cat') => setEditValues({ ...editValues, pet_type: v })}
+                        weight={editValues.weight}
+                        setPeso={(v: string) => setEditValues({ ...editValues, weight: parseFloat(v) || null })}
+                        breed={editValues.breed}
+                        setRaza={(v: string) => setEditValues({ ...editValues, breed: v })}
+                        age={editValues.age}
+                        setEdad={(v: string) => setEditValues({ ...editValues, age: parseInt(v) || 0 })}
+                        descripcion={editValues.descripcion}
+                        setDescripcion={(v: string) => setEditValues({ ...editValues, descripcion: v })}
+                        styles={{ input: commonStyles.input, label: commonStyles.label }}
+                      />
 
-                  <TouchableOpacity
-                    style={[commonStyles.button, { backgroundColor: colors.primary, marginTop: 8 }]}
-                    onPress={handleEditPet}
-                  >
-                    <Text style={commonStyles.buttonText}>Guardar</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[commonStyles.button, { backgroundColor: colors.secondary }]}
-                    onPress={() => setEditMode(false)}
-                  >
-                    <Text style={commonStyles.buttonText}>Cancelar</Text>
-                  </TouchableOpacity>
-                </>
-              )}
+                      <TouchableOpacity
+                        style={[commonStyles.button, { backgroundColor: colors.primary, marginTop: 8 }]}
+                        onPress={handleEditPet}
+                      >
+                        <Text style={commonStyles.buttonText}>Guardar</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[commonStyles.button, { backgroundColor: colors.secondary }]}
+                        onPress={() => setEditMode(false)}
+                      >
+                        <Text style={commonStyles.buttonText}>Cancelar</Text>
+                      </TouchableOpacity>
+                    </>
+                  )}
+                </View>
+              </TouchableWithoutFeedback>
             </View>
-          </View>
+          </TouchableWithoutFeedback>
         </Modal>
 
         <View style={styles.section}>
