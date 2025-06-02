@@ -26,14 +26,21 @@ export default function AddPetScreen({ navigation }: NativeStackScreenProps<Root
 
 
   const handleSubmit = async () => {
-    const { name, breed, age, pet_type } = formValues;
+    const { name, breed, age, pet_type, weight, descripcion } = formValues;
     if (!name || !breed || !age || !pet_type) {
       Alert.alert('Error', 'Todos los campos son obligatorios.');
       return;
     }
 
     try {
-      await createPet(formValues);
+      await createPet({
+        name,
+        breed,
+        age,
+        pet_type,
+        weight,
+        description: descripcion, // <-- CAMBIA ESTO
+      });
       Alert.alert('Mascota agregada');
       navigation.goBack();
     } catch (error) {
