@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Modal, FlatList, KeyboardAvoidingView, ScrollView, Platform, StatusBar } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Modal, FlatList, Keyboard } from 'react-native';
 
 const dogBreeds = [
   'Sin raza', 'Labrador Retriever', 'Bulldog', 'Poodle', 'Beagle', 'Dachshund', 'Boxer', 'Golden Retriever', 'Chihuahua', 'Pug', 'Pastor Alemán'
@@ -48,22 +48,9 @@ export default function PetForm({
         placeholder="Nombre de la mascota"
         value={name}
         onChangeText={setNombre}
-        returnKeyType="next"
-        onSubmitEditing={() => pesoRef.current?.focus()}
-        blurOnSubmit={false}
-      />
-
-      <Text style={styles.label}>Peso (kg)</Text>
-      <TextInput
-        ref={pesoRef}
-        style={styles.input}
-        placeholder="Peso en kilogramos"
-        value={weight !== undefined && weight !== null ? weight.toString() : ''}
-        onChangeText={setPeso}
-        keyboardType="numeric"
-        returnKeyType="next"
-        onSubmitEditing={() => edadRef.current?.focus()}
-        blurOnSubmit={false}
+        returnKeyType="done" // Cambiado a "done"
+        onSubmitEditing={() => Keyboard.dismiss()} // Cierra el teclado
+        blurOnSubmit={true}
       />
 
       <Text style={styles.label}>Tipo</Text>
@@ -172,6 +159,19 @@ export default function PetForm({
         </TouchableOpacity>
       </Modal>
 
+      <Text style={styles.label}>Peso (kg)</Text>
+      <TextInput
+        ref={pesoRef}
+        style={styles.input}
+        placeholder="Peso en kilogramos"
+        value={weight !== undefined && weight !== null ? weight.toString() : ''}
+        onChangeText={setPeso}
+        keyboardType="numeric"
+        returnKeyType="next"
+        onSubmitEditing={() => edadRef.current?.focus()}
+        blurOnSubmit={false}
+      />
+
       <Text style={styles.label}>Edad</Text>
       <TextInput
         ref={edadRef}
@@ -193,7 +193,9 @@ export default function PetForm({
         value={descripcion || ''}
         onChangeText={setDescripcion}
         maxLength={40}
-        multiline
+        returnKeyType="done" 
+        onSubmitEditing={() => Keyboard.dismiss()}
+        blurOnSubmit={true}
       />
     </View>
   );

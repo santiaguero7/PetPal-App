@@ -39,7 +39,7 @@ export default function AddPetScreen({ navigation }: NativeStackScreenProps<Root
         age,
         pet_type,
         weight,
-        description: descripcion, // <-- CAMBIA ESTO
+        description: descripcion,
       });
       Alert.alert('Mascota agregada');
       navigation.goBack();
