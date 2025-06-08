@@ -1,45 +1,11 @@
-import React, { useState, useContext } from 'react';
-import { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { getAllPetpals } from '../services/petpals';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '../themes/colors';
 import ScreenHeader from '../components/ScreenHeader';
-import { PetsContext } from '../context/PetsContext';
 import { searchPetpalsByMascota } from '../services/petpals';
-
-
-// Simula datos de cuidadores
-const caretakers = [
-  {
-    id: 1,
-    nombre: 'Ana López',
-    experiencia: '3 años',
-    distancia: '1.2 km',
-    servicios: ['Paseo de perros', 'Cuidado en casa'],
-    ubicacion: 'Palermo',
-    especies: ['Perro'],
-  },
-  {
-    id: 2,
-    nombre: 'Carlos Ruiz',
-    experiencia: '5 años',
-    distancia: '2.5 km',
-    servicios: ['Paseo de perros'],
-    ubicacion: 'Belgrano',
-    especies: ['Perro'],
-  },
-  {
-    id: 3,
-    nombre: 'María Gómez',
-    experiencia: '2 años',
-    distancia: '3.1 km',
-    servicios: ['Cuidado en casa', 'Hospedaje'],
-    ubicacion: 'Recoleta',
-    especies: ['Gato'],
-  },
-];
 
 const SERVICE_OPTIONS = [
   { key: 'Paseo de perros', label: 'Paseo' },
@@ -54,18 +20,21 @@ type RootStackParamList = {
 
 type SearchScreenProps = {
   navigation: StackNavigationProp<RootStackParamList, 'Perfil'>;
+  // Puedes pasar las mascotas como prop si lo deseas:
+  // pets: any[];
 };
 
 export default function SearchScreen({ navigation }: SearchScreenProps) {
-  const petsContext = useContext(PetsContext);
-  const pets = petsContext?.pets || [];
+  // Reemplaza este array por tu fuente real de mascotas
+  const pets: any[] = [];
+
   const [mascotaSeleccionada, setMascotaSeleccionada] = useState('');
   const [ubicacion, setUbicacion] = useState('');
   const [servicioSeleccionado, setServicioSeleccionado] = useState('');
   const [showMascotas, setShowMascotas] = useState(false);
   const [showServicios, setShowServicios] = useState(false);
   const [petpals, setPetpals] = useState<any[]>([]);
-  
+
   useEffect(() => {
     const fetchPetpals = async () => {
       try {
@@ -79,23 +48,20 @@ export default function SearchScreen({ navigation }: SearchScreenProps) {
     fetchPetpals();
   }, []);
 
-
-
   const mascota = pets.find(m => m.id === mascotaSeleccionada);
 
   // Filtrado por mascota, servicio y ubicación
   const filteredCaretakers = petpals.filter((c) => {
     const matchesServicio = servicioSeleccionado
       ? (servicioSeleccionado === 'Paseo de perros' && c.service_type === 'dog walker') ||
-      (servicioSeleccionado === 'Cuidado en casa' && c.service_type === 'caregiver')
+        (servicioSeleccionado === 'Cuidado en casa' && c.service_type === 'caregiver')
       : true;
 
     const matchesUbicacion = !ubicacion || c.location.toLowerCase().includes(ubicacion.toLowerCase());
-    const matchesEspecie = !mascota || c.pet_type === mascota.especie.toLowerCase();
+    const matchesEspecie = !mascota || c.pet_type === mascota.especie?.toLowerCase();
 
     return matchesServicio && matchesUbicacion && matchesEspecie;
   });
-
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['top']}>

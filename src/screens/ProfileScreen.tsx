@@ -62,7 +62,6 @@ export default function ProfileScreen({ navigation }: Props) {
   const loadPets = async () => {
     try {
       const data = await getMyPets();
-      console.log('Mascotas recibidas:', data); // <-- Agrega esta línea
       setPets(data);
     } catch (error) {
       console.error('Error trayendo mascotas del usuario:', error);
