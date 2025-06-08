@@ -216,19 +216,21 @@ export default function RegisterScreen({ navigation }: Props) {
             placeholderTextColor="#888"
             returnKeyType="next"
             blurOnSubmit={false}
-            onSubmitEditing={() => direccionRef.current?.focus()}
+            onSubmitEditing={() => telefonoRef.current?.focus()}
             autoComplete="off"
             textContentType="none"
             importantForAutofill="no"
             autoCorrect={false}
             autoCapitalize="none"
           />
+        
           <TextInput
-            ref={direccionRef}
+            ref={telefonoRef}
             style={commonStyles.input}
-            placeholder="Dirección"
-            value={direccion}
-            onChangeText={setDireccion}
+            placeholder="Teléfono"
+            value={telefono}
+            onChangeText={setTelefono}
+            keyboardType="number-pad"
             placeholderTextColor="#888"
             returnKeyType="next"
             blurOnSubmit={false}
@@ -237,7 +239,7 @@ export default function RegisterScreen({ navigation }: Props) {
             textContentType="none"
             importantForAutofill="no"
             autoCorrect={false}
-            autoCapitalize="words"
+            autoCapitalize="none"
           />
           <TextInput
             ref={provinciaRef}
@@ -245,6 +247,22 @@ export default function RegisterScreen({ navigation }: Props) {
             placeholder="Provincia"
             value={provincia}
             onChangeText={setProvincia}
+            placeholderTextColor="#888"
+            returnKeyType="next"
+            blurOnSubmit={false}
+            onSubmitEditing={() => ciudadRef.current?.focus()}
+            autoComplete="off"
+            textContentType="none"
+            importantForAutofill="no"
+            autoCorrect={false}
+            autoCapitalize="words"
+          />
+          <TextInput
+            ref={ciudadRef}
+            style={commonStyles.input}
+            placeholder="Ciudad"
+            value={ciudad}
+            onChangeText={setCiudad}
             placeholderTextColor="#888"
             returnKeyType="next"
             blurOnSubmit={false}
@@ -264,7 +282,7 @@ export default function RegisterScreen({ navigation }: Props) {
             placeholderTextColor="#888"
             returnKeyType="next"
             blurOnSubmit={false}
-            onSubmitEditing={() => telefonoRef.current?.focus()}
+            onSubmitEditing={() => direccionRef.current?.focus()}
             autoComplete="off"
             textContentType="none"
             importantForAutofill="no"
@@ -272,28 +290,11 @@ export default function RegisterScreen({ navigation }: Props) {
             autoCapitalize="words"
           />
           <TextInput
-            ref={telefonoRef}
+            ref={direccionRef}
             style={commonStyles.input}
-            placeholder="Teléfono"
-            value={telefono}
-            onChangeText={setTelefono}
-            keyboardType="number-pad"
-            placeholderTextColor="#888"
-            returnKeyType="next"
-            blurOnSubmit={false}
-            onSubmitEditing={() => ciudadRef.current?.focus()}
-            autoComplete="off"
-            textContentType="none"
-            importantForAutofill="no"
-            autoCorrect={false}
-            autoCapitalize="none"
-          />
-          <TextInput
-            ref={ciudadRef}
-            style={commonStyles.input}
-            placeholder="Ciudad"
-            value={ciudad}
-            onChangeText={setCiudad}
+            placeholder="Dirección"
+            value={direccion}
+            onChangeText={setDireccion}
             placeholderTextColor="#888"
             returnKeyType="done"
             blurOnSubmit={true}
