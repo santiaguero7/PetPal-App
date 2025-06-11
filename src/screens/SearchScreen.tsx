@@ -1,140 +1,165 @@
-import React, { useState, useEffect } from 'react';
-import { getAllPetpals } from '../services/petpals';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+  RefreshControl,
+  StyleSheet
+} from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '../themes/colors';
 import ScreenHeader from '../components/ScreenHeader';
+import PetPalCard from '../components/PetPalCard';
+import { getMyPets } from '../services/pets';
 import { searchPetpalsByMascota } from '../services/petpals';
+
+type Pet = {
+  id: number;
+  name: string;
+  breed: string;
+  age: number;
+  weight: number | null;
+  pet_type: 'dog' | 'cat';
+};
+
+type Petpal = {
+  id: number;
+  service_type: 'dog walker' | 'caregiver';
+  price_per_hour: number;
+  price_per_day: number | null;
+  experience: string;
+  location: string;
+  pet_type: 'dog' | 'cat';
+  size_accepted: 'small' | 'medium' | 'large' | 'all';
+};
 
 const SERVICE_OPTIONS = [
   { key: 'Paseo de perros', label: 'Paseo' },
   { key: 'Cuidado en casa', label: 'Cuidado' },
 ];
 
-import type { StackNavigationProp } from '@react-navigation/stack';
+export default function SearchScreen({ navigation }: any) {
+  const [pets, setPets] = useState<Pet[]>([]);
+  const [selectedPetId, setSelectedPetId] = useState<number | null>(null);
+  const [location, setLocation] = useState('');
+  const [service, setService] = useState('');
+  const [showPets, setShowPets] = useState(false);
+  const [showServices, setShowServices] = useState(false);
+  const [petpals, setPetpals] = useState<Petpal[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
-type RootStackParamList = {
-  Perfil: { caretakerId: number };
+  const selectedPet = pets.find(p => p.id === selectedPetId);
+  const sizeLabel = (w: number | null) =>
+    w == null ? 'Desconocido' : w < 10 ? 'Chica' : w < 20 ? 'Mediana' : 'Grande';
+
+  const weightToSizeLabel = (w: number | null): string =>
+  w === null ? 'Desconocido' : w < 10 ? 'Chica' : w < 20 ? 'Mediana' : 'Grande';
+
+const translateSize = (size: string): string => {
+  switch (size) {
+    case 'small': return 'Chica';
+    case 'medium': return 'Mediana';
+    case 'large': return 'Grande';
+    case 'all': return 'Todos';
+    default: return 'Desconocido';
+  }
 };
 
-type SearchScreenProps = {
-  navigation: StackNavigationProp<RootStackParamList, 'Perfil'>;
-  // Puedes pasar las mascotas como prop si lo deseas:
-  // pets: any[];
-};
 
-export default function SearchScreen({ navigation }: SearchScreenProps) {
-  // Reemplaza este array por tu fuente real de mascotas
-  const pets: any[] = [];
 
-  const [mascotaSeleccionada, setMascotaSeleccionada] = useState('');
-  const [ubicacion, setUbicacion] = useState('');
-  const [servicioSeleccionado, setServicioSeleccionado] = useState('');
-  const [showMascotas, setShowMascotas] = useState(false);
-  const [showServicios, setShowServicios] = useState(false);
-  const [petpals, setPetpals] = useState<any[]>([]);
+  // Carga mascotas
+  const loadPets = async () => {
+    try {
+      const data = await getMyPets();
+      setPets(data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+  useEffect(() => { loadPets(); }, []);
 
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadPets();
+    setRefreshing(false);
+  };
+
+  // Búsqueda de PetPals
   useEffect(() => {
     const fetchPetpals = async () => {
-      try {
-        const data = await getAllPetpals();
-        setPetpals(data);
-      } catch (error) {
-        console.error('Error cargando PetPals:', error);
+      if (!selectedPetId || !service) {
+        setPetpals([]);
+        return;
       }
+      setLoading(true);
+      const svc = service === 'Paseo de perros' ? 'dog walker' : 'caregiver';
+      try {
+        const results = await searchPetpalsByMascota(selectedPetId, location, svc);
+        setPetpals(results);
+      } catch (e) {
+        console.error(e);
+      }
+      setLoading(false);
     };
-
     fetchPetpals();
-  }, []);
-
-  const mascota = pets.find(m => m.id === mascotaSeleccionada);
-
-  // Filtrado por mascota, servicio y ubicación
-  const filteredCaretakers = petpals.filter((c) => {
-    const matchesServicio = servicioSeleccionado
-      ? (servicioSeleccionado === 'Paseo de perros' && c.service_type === 'dog walker') ||
-        (servicioSeleccionado === 'Cuidado en casa' && c.service_type === 'caregiver')
-      : true;
-
-    const matchesUbicacion = !ubicacion || c.location.toLowerCase().includes(ubicacion.toLowerCase());
-    const matchesEspecie = !mascota || c.pet_type === mascota.especie?.toLowerCase();
-
-    return matchesServicio && matchesUbicacion && matchesEspecie;
-  });
+  }, [selectedPetId, location, service]);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['top']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <ScrollView
-        contentContainerStyle={{ padding: 18, backgroundColor: colors.background }}
-        showsVerticalScrollIndicator={true}
+        contentContainerStyle={{ padding: 18 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
-        <ScreenHeader title="Buscar PetPals" subtitle="Encuentra cuidadores cerca de ti" />
+        <ScreenHeader title="Buscar PetPals" subtitle="Conecta con cuidadores cerca" />
 
-        {/* Filtros en 3 recuadros uno debajo del otro */}
+        {/* Selector Mascota */}
         <View style={styles.filterColumn}>
-          {/* Selector de mascota */}
           <View style={styles.filterBoxColumn}>
-            <TouchableOpacity
-              style={styles.filterSelectColumn}
-              onPress={() => setShowMascotas(!showMascotas)}
-              activeOpacity={0.8}
-            >
-              <Text
-                style={[
-                  mascota ? styles.filterSelectText : styles.filterSelectTextPlaceholder
-                ]}
-              >
-                {mascota ? mascota.nombre : 'Selecciona tu mascota'}
+            <TouchableOpacity style={styles.filterSelectColumn} onPress={() => setShowPets(!showPets)}>
+              <Text style={selectedPet ? styles.filterSelectText : styles.filterSelectTextPlaceholder}>
+                {selectedPet
+                  ? `${selectedPet.name} (${selectedPet.pet_type === 'dog' ? 'Perro' : 'Gato'} – ${sizeLabel(selectedPet.weight)})`
+                  : 'Selecciona tu mascota'}
               </Text>
-              <Icon name={showMascotas ? 'chevron-up' : 'chevron-down'} size={22} color={colors.primary} />
+              <Icon name={showPets ? 'chevron-up' : 'chevron-down'} size={20} color={colors.primary} />
             </TouchableOpacity>
-            {showMascotas && (
+            {showPets && (
               <View style={styles.dropdownColumn}>
                 {pets.map(m => (
                   <TouchableOpacity
                     key={m.id}
                     style={styles.dropdownOption}
-                    onPress={() => {
-                      setMascotaSeleccionada(m.id);
-                      setShowMascotas(false);
-                    }}
+                    onPress={() => { setSelectedPetId(m.id); setShowPets(false); }}
                   >
-                    <Text style={{ color: colors.primary }}>{m.nombre}</Text>
+                    <Text style={{ color: colors.primary }}>{m.name}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
             )}
           </View>
+        </View>
 
-          {/* Selector de servicio */}
+        {/* Selector Servicio */}
+        <View style={styles.filterColumn}>
           <View style={styles.filterBoxColumn}>
-            <TouchableOpacity
-              style={styles.filterSelectColumn}
-              onPress={() => setShowServicios(!showServicios)}
-              activeOpacity={0.8}
-            >
-              <Text
-                style={[
-                  servicioSeleccionado ? styles.filterSelectText : styles.filterSelectTextPlaceholder
-                ]}
-              >
-                {servicioSeleccionado
-                  ? SERVICE_OPTIONS.find(s => s.key === servicioSeleccionado)?.label
-                  : 'Tipo de servicio'}
+            <TouchableOpacity style={styles.filterSelectColumn} onPress={() => setShowServices(!showServices)}>
+              <Text style={service ? styles.filterSelectText : styles.filterSelectTextPlaceholder}>
+                {service ? SERVICE_OPTIONS.find(s => s.key === service)?.label : 'Tipo de servicio'}
               </Text>
-              <Icon name={showServicios ? 'chevron-up' : 'chevron-down'} size={22} color={colors.primary} />
+              <Icon name={showServices ? 'chevron-up' : 'chevron-down'} size={20} color={colors.primary} />
             </TouchableOpacity>
-            {showServicios && (
+            {showServices && (
               <View style={styles.dropdownColumn}>
                 {SERVICE_OPTIONS.map(s => (
                   <TouchableOpacity
                     key={s.key}
                     style={styles.dropdownOption}
-                    onPress={() => {
-                      setServicioSeleccionado(s.key);
-                      setShowServicios(false);
-                    }}
+                    onPress={() => { setService(s.key); setShowServices(false); }}
                   >
                     <Text style={{ color: colors.primary }}>{s.label}</Text>
                   </TouchableOpacity>
@@ -142,49 +167,38 @@ export default function SearchScreen({ navigation }: SearchScreenProps) {
               </View>
             )}
           </View>
+        </View>
 
-          {/* Selector de ubicación */}
+        {/* Input Ubicación */}
+        <View style={styles.filterColumn}>
           <View style={styles.filterBoxColumn}>
-            <View style={styles.filterSelectColumn}>
-              <TextInput
-                style={[
-                  styles.filterSelectText,
-                  !ubicacion && styles.filterSelectTextPlaceholder,
-                  { flex: 1, paddingVertical: 0, paddingHorizontal: 0, backgroundColor: 'transparent', borderWidth: 0 }
-                ]}
-                placeholder="Ubicación"
-                value={ubicacion}
-                onChangeText={setUbicacion}
-                placeholderTextColor={colors.primary}
-                underlineColorAndroid="transparent"
-              />
-            </View>
+            <TextInput
+              style={styles.filterSelectColumn}
+              placeholder="Ubicación"
+              value={location}
+              onChangeText={setLocation}
+              placeholderTextColor={colors.primary}
+            />
           </View>
         </View>
 
-        {/* Listado de cuidadores */}
-        <View style={{ marginTop: 18 }}>
-          {filteredCaretakers.length === 0 && (
-            <Text style={{ color: '#888', textAlign: 'center', marginTop: 30 }}>No se encontraron cuidadores.</Text>
-          )}
-          {filteredCaretakers.map((c) => (
-            <View key={c.id} style={styles.caretakerCard}>
-              <Icon name="account" size={32} color={colors.primary} style={{ marginRight: 12 }} />
-              <View style={{ flex: 1 }}>
-                <Text style={styles.caretakerName}>
-                  {c.service_type === 'dog walker' ? 'Paseador' : 'Cuidador'} en {c.location}
-                </Text>
-                <Text style={styles.caretakerInfo}>
-                  {c.experience}
-                </Text>
-                <Text style={styles.caretakerServices}>
-                  💰 {c.price_per_hour ? `$${c.price_per_hour}/h` : `$${c.price_per_day}/día`} • 🐾 {c.pet_type === 'dog' ? 'Perros' : 'Gatos'}
-                </Text>
-              </View>
-            </View>
-          ))}
-
-        </View>
+        {/* Resultados */}
+        {loading ? (
+          <ActivityIndicator size="large" color={colors.primary} />
+        ) : petpals.length === 0 ? (
+          <Text style={{ color: '#888', textAlign: 'center', marginTop: 30 }}>
+            No se encontraron cuidadores.
+          </Text>
+        ) : (
+          petpals.map(c => (
+            <PetPalCard
+              key={c.id}
+              petpal={c}
+              translateSize={translateSize}
+              onPressProfile={(id) => navigation.navigate('Perfil', { caretakerId: id })}
+            />
+          ))
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -204,12 +218,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#E8F6EF',
     borderRadius: 16,
     borderWidth: 2,
-    borderColor: '#219653', // Verde oscuro
+    borderColor: '#219653',
     paddingHorizontal: 14,
     paddingVertical: 10,
     flexDirection: 'row',
     alignItems: 'center',
-    minHeight: 44,
     justifyContent: 'space-between',
   },
   filterSelectText: {
@@ -238,10 +251,8 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 16,
   },
-  tabBtn: { backgroundColor: '#E8F6EF', borderRadius: 20, paddingVertical: 8, paddingHorizontal: 18, alignItems: 'center' },
-  tabBtnText: { color: '#219653', fontWeight: 'bold' },
-  caretakerCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 12, padding: 12, marginBottom: 10, elevation: 1 },
-  caretakerName: { fontWeight: 'bold', color: '#22223B', fontSize: 16 },
-  caretakerInfo: { color: '#6FCF97', fontSize: 13 },
-  caretakerServices: { color: '#888', fontSize: 13 },
+  caretakerCard: { /* ya no usamos PetCard */ },
+  caretakerName: { /* idem */ },
+  caretakerInfo: { /* idem */ },
+  caretakerServices: { /* idem */ },
 });
