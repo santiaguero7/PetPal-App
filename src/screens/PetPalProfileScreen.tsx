@@ -12,7 +12,7 @@ import PetPalPostForm from '../components/PetPalPostForm';
 import axios from 'axios';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import type { RootStackParamList } from '../navigation'; // <--- usa el global
-import { getMyPetpals, updatePetpalById } from '../services/petpals';
+import { getMyPetpals } from '../services/petpals';
 
 const api = axios.create({
   baseURL: 'https://petpal-backend-production.up.railway.app/api',
@@ -39,15 +39,7 @@ export default function PetPalProfileScreen({ navigation }: PetPalProfileScreenP
   const [selectedPost, setSelectedPost] = useState<any>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [editMode, setEditMode] = useState(false);
-  const [editValues, setEditValues] = useState<any>({
-    service_type: '',
-    price_per_hour: null,
-    price_per_day: null,
-    experience: '',
-    location: '',
-    pet_type: '',
-    size_accepted: '',
-  });
+  const [editValues, setEditValues] = useState<any>(null);
   const [showPostModal, setShowPostModal] = useState(false);
 
   useEffect(() => {
@@ -68,6 +60,7 @@ export default function PetPalProfileScreen({ navigation }: PetPalProfileScreenP
   const loadPosts = async () => {
     try {
       const postsArray = await getMyPetpals();
+      console.log('POSTS DEL USUARIO:', postsArray);
       setPosts(postsArray);
     } catch (e) {
       setPosts([]);
@@ -118,11 +111,15 @@ export default function PetPalProfileScreen({ navigation }: PetPalProfileScreenP
   };
 
   const handleEditPost = async () => {
+    if (!selectedPost) return;
     try {
-      await updatePetpalById(selectedPost.id, editValues);
+      const token = await getToken();
+      await api.put(`/petpals/${selectedPost.id}`, editValues, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      await loadPosts();
       setEditMode(false);
       setSelectedPost(null);
-      await loadPosts(); // refresca la lista de publicaciones
     } catch (e) {
       Alert.alert('Error', 'No se pudo actualizar la publicación');
     }
@@ -204,13 +201,12 @@ export default function PetPalProfileScreen({ navigation }: PetPalProfileScreenP
                 }}
                 activeOpacity={0.8}
               >
-                <PetPalPostCard {...post} /* NO showActions aquí */ />
+                <PetPalPostCard {...post} />
               </TouchableOpacity>
             ))
           )
           }
         </View>
-
 
         <Modal
           visible={!!selectedPost}
@@ -229,51 +225,40 @@ export default function PetPalProfileScreen({ navigation }: PetPalProfileScreenP
           >
             <View style={styles.modalOverlay}>
               <TouchableWithoutFeedback>
-                <View style={[styles.modalFormContent, { maxHeight: '80%' }]}>
-                  <ScrollView
-                    contentContainerStyle={{ flexGrow: 1 }}
-                    showsVerticalScrollIndicator={false}
-                    keyboardShouldPersistTaps="handled"
-                  >
-                    {selectedPost && !editMode && (
-                      <PetPalPostCard
-                        {...selectedPost}
-                        showActions
-                        onEdit={() => setEditMode(true)}
-                        onDelete={handleDeletePost}
-                        // NO onClose aquí
+                <View style={styles.modalFormContent}>
+                  {selectedPost && !editMode && (
+                    <PetPalPostCard
+                      {...selectedPost}
+                      showActions
+                      onEdit={() => setEditMode(true)}
+                      onDelete={handleDeletePost}
+                      onClose={() => {
+                        setEditMode(false);
+                        setSelectedPost(null);
+                      }}
+                    />
+                  )}
+                  {selectedPost && editMode && (
+                    <>
+                      <PetPalPostForm
+                        initialValues={editValues}
+                        onSubmit={(values) => setEditValues(values)}
+                        submitText="Guardar"
                       />
-                    )}
-                    {selectedPost && editMode && (
-                      <>
-                        <PetPalPostForm
-                          initialValues={editValues}
-                          onSubmit={handleEditPost}
-                          submitText="Guardar"
-                        />
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 }}>
-                          <TouchableOpacity
-                            style={[
-                              styles.button,
-                              { backgroundColor: colors.primary, flex: 1, marginRight: 6 }
-                            ]}
-                            onPress={handleEditPost}
-                          >
-                            <Text style={styles.buttonText}>Guardar</Text>
-                          </TouchableOpacity>
-                          <TouchableOpacity
-                            style={[
-                              styles.button,
-                              { backgroundColor: colors.secondary, flex: 1, marginLeft: 6 }
-                            ]}
-                            onPress={() => setEditMode(false)}
-                          >
-                            <Text style={styles.buttonText}>Cancelar</Text>
-                          </TouchableOpacity>
-                        </View>
-                      </>
-                    )}
-                  </ScrollView>
+                      <TouchableOpacity
+                        style={[styles.button, { backgroundColor: colors.primary, marginTop: 8 }]}
+                        onPress={handleEditPost}
+                      >
+                        <Text style={styles.buttonText}>Guardar</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.button, { backgroundColor: colors.secondary }]}
+                        onPress={() => setEditMode(false)}
+                      >
+                        <Text style={styles.buttonText}>Cancelar</Text>
+                      </TouchableOpacity>
+                    </>
+                  )}
                 </View>
               </TouchableWithoutFeedback>
             </View>

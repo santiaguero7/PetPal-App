@@ -105,7 +105,7 @@ export default function AddPubScreen({ navigation }: NativeStackScreenProps<Root
         />
 
         {posts.length === 0 ? (
-          <Text style={{ color: '#22223B', marginBottom: 12 }}>No tienes publicaciones registradas.</Text>
+          null
         ) : (
           posts.map((post) => (
             <TouchableOpacity

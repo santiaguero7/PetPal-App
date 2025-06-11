@@ -56,9 +56,6 @@ export default function PetPalPostCard({
           <TouchableOpacity style={[styles.actionBtn, styles.deleteBtn]} onPress={onDelete}>
             <Text style={[styles.actionText, styles.deleteText]}>Eliminar</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionBtn} onPress={onClose}>
-            <Text style={styles.actionText}>Cerrar</Text>
-          </TouchableOpacity>
         </View>
       )}
     </View>
