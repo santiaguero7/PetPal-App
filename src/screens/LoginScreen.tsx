@@ -59,17 +59,17 @@ export default function LoginScreen({ navigation }: Props) {
           width: '100%',
           height: 170,
           resizeMode: 'contain',
-          marginTop: 24,
+          marginTop: 20,
         }}
       />
 
       <Text
         style={{
-          fontSize: 48,
+          fontSize: 50,
           color: colors.primary,
           fontWeight: 'bold',
           textAlign: 'center',
-          marginBottom: 24,
+          marginBottom: 15,
           fontFamily: 'System',
         }}
       >
