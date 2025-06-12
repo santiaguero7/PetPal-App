@@ -14,6 +14,7 @@ import axios from 'axios';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import type { RootStackParamList } from '../navigation'; // <--- usa el global
 import { getMyPetpals } from '../services/petpals';
+import UserCard from '../components/UserCard';
 
 const api = axios.create({
   baseURL: 'https://petpal-backend-production.up.railway.app/api',
@@ -42,6 +43,7 @@ export default function PetPalProfileScreen({ navigation }: PetPalProfileScreenP
   const [editMode, setEditMode] = useState(false);
   const [editValues, setEditValues] = useState<any>(null);
   const [showPostModal, setShowPostModal] = useState(false);
+  const [showUserModal, setShowUserModal] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -160,18 +162,17 @@ export default function PetPalProfileScreen({ navigation }: PetPalProfileScreenP
 
         <View style={styles.profileCard}>
           <View style={styles.profileHeader} />
-          <View style={styles.avatarBox}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>{user?.name?.substring(0, 2).toUpperCase() || 'PP'}</Text>
+          <TouchableOpacity onPress={() => setShowUserModal(true)} activeOpacity={0.8}>
+            <View style={styles.avatarBox}>
+              <View style={styles.avatar}>
+                <Text style={styles.avatarText}>{user?.name?.substring(0, 2).toUpperCase() || 'US'}</Text>
+              </View>
             </View>
-          </View>
-          <View style={styles.profileInfo}>
-            <Text style={styles.profileName}>{user?.name || 'Nombre del PetPal'}</Text>
-            <Text style={styles.profileEmail}>{user?.email || 'petpal@email.com'}</Text>
-            <TouchableOpacity style={styles.editBtn}>
-              <Text style={styles.editBtnText}>Editar perfil</Text>
-            </TouchableOpacity>
-          </View>
+            <View style={styles.profileInfo}>
+              <Text style={styles.profileName}>{user?.name}</Text>
+              <Text style={styles.profileEmail}>{user?.email}</Text>
+            </View>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.section}>
@@ -304,6 +305,29 @@ export default function PetPalProfileScreen({ navigation }: PetPalProfileScreenP
           </View>
         </TouchableWithoutFeedback>
       </Modal>
+
+      {/* Modal para mostrar usuario */}
+      <Modal
+        visible={showUserModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowUserModal(false)}
+      >
+        <TouchableWithoutFeedback onPress={() => setShowUserModal(false)}>
+          <View style={styles.modalOverlay}>
+            <TouchableWithoutFeedback>
+              <UserCard
+                user={user}
+                onEdit={() => {
+                  setShowUserModal(false);
+                  navigation.navigate('EditProfile');
+                }}
+                onClose={() => setShowUserModal(false)}
+              />
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -390,5 +414,10 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
+  },
+  label: {
+    color: '#22223B',
+    fontSize: 14,
+    marginBottom: 4,
   },
 });

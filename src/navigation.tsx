@@ -19,6 +19,7 @@ import PetPalHomeScreen from './screens/PetPalHomeScreen';
 import PetPalProfileScreen from './screens/PetPalProfileScreen';
 import PetPalRequestScreen from './screens/PetPalRequestsScreen'; 
 import AddPubScreen from './screens/AddPubScreen'; 
+import EditProfileScreen from './screens/EditProfileScreen'; // Nueva importación
 
 // Tipo para el stack principal
 export type RootStackParamList = {
@@ -28,6 +29,7 @@ export type RootStackParamList = {
   PetPalHome: undefined;
   AddPet: undefined; 
   AddPub: undefined; 
+  EditProfile: undefined; // Nuevo tipo para la pantalla de edición de perfil
 };
 
 // Tipos para los tabs de usuario general
@@ -155,6 +157,7 @@ export default function AppNavigator() {
         <Stack.Screen name="PetPalHome" component={PetPalTabs} />
         <Stack.Screen name="AddPet" component={AddPetScreen} />
         <Stack.Screen name="AddPub" component={AddPubScreen} />
+        <Stack.Screen name="EditProfile" component={EditProfileScreen} /> 
       </Stack.Navigator>
     </NavigationContainer>
   );

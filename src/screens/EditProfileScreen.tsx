@@ -1,26 +1,37 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Keyboard, ScrollView, KeyboardAvoidingView, Platform, StatusBar } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { colors } from '../themes/colors';
 import { commonStyles } from '../themes/commonStyles';
-import ModalSelector from 'react-native-modal-selector';
-import { registerUser } from '../services/auth';
-import { saveToken } from '../storage/token';
+import { getUserById, updateUser } from '../services/users';
+import { getToken } from '../storage/token';
 import ScreenHeader from '../components/ScreenHeader';
+import { jwtDecode } from 'jwt-decode';
 
-import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import type { RootStackParamList } from '../navigation';
+import type { StackNavigationProp } from '@react-navigation/stack';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'Register'>;
+type RootStackParamList = {
+  EditProfile: undefined;
+  // Agrega aquí otras pantallas si es necesario
+};
 
-export default function RegisterScreen({ navigation }: Props) {
-  const [email, setEmail] = useState('');
+type EditProfileScreenNavigationProp = StackNavigationProp<
+  RootStackParamList,
+  'EditProfile'
+>;
+
+interface EditProfileScreenProps {
+  navigation: EditProfileScreenNavigationProp;
+}
+
+export default function EditProfileScreen({ navigation }: EditProfileScreenProps) {
+  const [loading, setLoading] = useState(true);
+  const [userId, setUserId] = useState<number | null>(null);
   const [nombre, setNombre] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [repeatPassword, setRepeatPassword] = useState('');
-  const [rol, setRol] = useState<'trabajador' | 'cliente'>('cliente');
   const [dni, setDni] = useState('');
-  const [especialidad, setEspecialidad] = useState('');
   const [direccion, setDireccion] = useState('');
   const [barrio, setBarrio] = useState('');
   const [telefono, setTelefono] = useState('');
@@ -37,12 +48,33 @@ export default function RegisterScreen({ navigation }: Props) {
   const telefonoRef = useRef<TextInput>(null);
   const ciudadRef = useRef<TextInput>(null);
 
-  const handleRegister = async () => {
+  useEffect(() => {
+    const fetchUser = async () => {
+      const token = await getToken();
+      if (!token) {
+        Alert.alert('Error', 'No se pudo obtener el token de usuario.');
+        setLoading(false);
+        return;
+      }
+      const decoded: any = jwtDecode(token);
+      setUserId(decoded.id);
+      const user = await getUserById(decoded.id);
+      setNombre(user.name || '');
+      setEmail(user.email || '');
+      setDni(user.dni || '');
+      setDireccion(user.direccion || '');
+      setBarrio(user.barrio || '');
+      setTelefono(user.telefono || '');
+      setCiudad(user.ciudad || '');
+      setLoading(false);
+    };
+    fetchUser();
+  }, []);
+
+  const handleSave = async () => {
     if (
       !email.trim() ||
       !nombre.trim() ||
-      !password.trim() ||
-      !repeatPassword.trim() ||
       !dni.trim() ||
       !direccion.trim() ||
       !barrio.trim() ||
@@ -52,49 +84,33 @@ export default function RegisterScreen({ navigation }: Props) {
       Alert.alert('Error', 'Completa todos los campos');
       return;
     }
-
-    if (password !== repeatPassword) {
+    if (password && password !== repeatPassword) {
       Alert.alert('Error', 'Las contraseñas no coinciden');
       return;
     }
-
+    if (userId === null) {
+      Alert.alert('Error', 'No se pudo obtener el ID de usuario.');
+      return;
+    }
     try {
-      const apiRole = rol === 'trabajador' ? 'petpal' : 'client';
-
-      const res = await registerUser(
-        nombre,
+      await updateUser(userId, {
+        name: nombre,
         email,
-        password,
-        apiRole,
+        password: password || undefined, // Solo si se quiere cambiar
         dni,
         direccion,
-        barrio,    
-        telefono,  
-        ciudad     
-      );
-
-      await saveToken(res.token);
-      Alert.alert('¡Registro exitoso!', `Bienvenido/a ${res.user.name}`);
-
-      if (res.user.role === 'petpal') {
-        navigation.replace('PetPalHome');
-      } else {
-        navigation.replace('Home');
-      }
+        barrio,
+        telefono,
+        ciudad,
+      });
+      Alert.alert('¡Perfil actualizado!');
+      navigation.goBack();
     } catch (error: any) {
-      Alert.alert('Error en el registro', error.message || 'Intentalo más tarde');
+      Alert.alert('Error', error.message || 'No se pudo actualizar');
     }
   };
 
-  const ROLES = [
-    { key: 'trabajador', label: 'PetPal' },
-    { key: 'cliente', label: 'Cliente' }
-  ];
-
-  const ROL_DESCRIPCIONES: Record<'trabajador' | 'cliente', string> = {
-    trabajador: 'PetPal: Podrás ofrecer servicios, gestionar mascotas de clientes y acceder a herramientas profesionales.',
-    cliente: 'Cliente: Podrás registrar tus mascotas, solicitar servicios y gestionar su información fácilmente.'
-  };
+  if (loading) return <Text style={{ margin: 30, textAlign: 'center' }}>Cargando...</Text>;
 
   return (
     <KeyboardAvoidingView
@@ -104,36 +120,11 @@ export default function RegisterScreen({ navigation }: Props) {
     >
       <View style={{ height: Platform.OS === 'ios' ? 48 : StatusBar.currentHeight || 24 }} />
       <ScrollView
-        contentContainerStyle={{ padding: 18, backgroundColor: '#F6FFF8' }} 
+        contentContainerStyle={{ padding: 18, backgroundColor: '#F6FFF8' }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <ScreenHeader title="Registro" subtitle='Crea cuenta' />
-
-        <View style={{ marginBottom: 10 }}>
-          <ModalSelector
-            data={ROLES}
-            initValue="Selecciona tu tipo de usuario"
-            onChange={option => setRol(option.key as 'trabajador' | 'cliente')}
-            selectStyle={{
-              ...commonStyles.input,
-              borderWidth: 2,
-              borderColor: colors.primary,
-            }}
-            selectTextStyle={{ color: colors.primary, fontSize: 16, fontWeight: 'bold' }}
-          >
-            <TextInput
-              style={[commonStyles.input, { color: colors.primary, fontWeight: 'bold' }]}
-              editable={false}
-              placeholder="Selecciona tu tipo de usuario"
-              value={ROLES.find(r => r.key === rol)?.label || ''}
-              pointerEvents="none"
-            />
-          </ModalSelector>
-          <Text style={{ color: '#555', fontSize: 14, marginBottom: 0, marginTop: 1, marginLeft: 10 }}>
-            {ROL_DESCRIPCIONES[rol]}
-          </Text>
-        </View>
+        <ScreenHeader title="Editar perfil" subtitle="Actualiza tus datos personales" />
 
         <View style={{ marginTop: 18 }}>
           <TextInput
@@ -146,16 +137,12 @@ export default function RegisterScreen({ navigation }: Props) {
             returnKeyType="next"
             blurOnSubmit={false}
             onSubmitEditing={() => emailRef.current?.focus()}
-            autoComplete="off"
-            textContentType="none"
-            importantForAutofill="no"
-            autoCorrect={false}
             autoCapitalize="words"
           />
           <TextInput
             ref={emailRef}
             style={commonStyles.input}
-            placeholder="Ingresá tu correo"
+            placeholder="Correo"
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
@@ -164,15 +151,11 @@ export default function RegisterScreen({ navigation }: Props) {
             returnKeyType="next"
             blurOnSubmit={false}
             onSubmitEditing={() => passwordRef.current?.focus()}
-            autoComplete="off"
-            textContentType="none"
-            importantForAutofill="no"
-            autoCorrect={false}
           />
           <TextInput
             ref={passwordRef}
             style={commonStyles.input}
-            placeholder="Ingresá tu contraseña"
+            placeholder="Nueva contraseña (opcional)"
             value={password}
             onChangeText={setPassword}
             secureTextEntry
@@ -180,10 +163,6 @@ export default function RegisterScreen({ navigation }: Props) {
             returnKeyType="next"
             blurOnSubmit={false}
             onSubmitEditing={() => repeatPasswordRef.current?.focus()}
-            autoComplete="off"
-            textContentType="none"
-            importantForAutofill="no"
-            autoCorrect={false}
             autoCapitalize="none"
           />
           <TextInput
@@ -197,10 +176,6 @@ export default function RegisterScreen({ navigation }: Props) {
             returnKeyType="next"
             blurOnSubmit={false}
             onSubmitEditing={() => dniRef.current?.focus()}
-            autoComplete="off"
-            textContentType="none"
-            importantForAutofill="no"
-            autoCorrect={false}
             autoCapitalize="none"
           />
           <TextInput
@@ -214,13 +189,8 @@ export default function RegisterScreen({ navigation }: Props) {
             returnKeyType="next"
             blurOnSubmit={false}
             onSubmitEditing={() => telefonoRef.current?.focus()}
-            autoComplete="off"
-            textContentType="none"
-            importantForAutofill="no"
-            autoCorrect={false}
             autoCapitalize="none"
           />
-        
           <TextInput
             ref={telefonoRef}
             style={commonStyles.input}
@@ -232,10 +202,6 @@ export default function RegisterScreen({ navigation }: Props) {
             returnKeyType="next"
             blurOnSubmit={false}
             onSubmitEditing={() => ciudadRef.current?.focus()}
-            autoComplete="off"
-            textContentType="none"
-            importantForAutofill="no"
-            autoCorrect={false}
             autoCapitalize="none"
           />
           <TextInput
@@ -248,10 +214,6 @@ export default function RegisterScreen({ navigation }: Props) {
             returnKeyType="next"
             blurOnSubmit={false}
             onSubmitEditing={() => barrioRef.current?.focus()}
-            autoComplete="off"
-            textContentType="none"
-            importantForAutofill="no"
-            autoCorrect={false}
             autoCapitalize="words"
           />
           <TextInput
@@ -264,10 +226,6 @@ export default function RegisterScreen({ navigation }: Props) {
             returnKeyType="next"
             blurOnSubmit={false}
             onSubmitEditing={() => direccionRef.current?.focus()}
-            autoComplete="off"
-            textContentType="none"
-            importantForAutofill="no"
-            autoCorrect={false}
             autoCapitalize="words"
           />
           <TextInput
@@ -280,60 +238,15 @@ export default function RegisterScreen({ navigation }: Props) {
             returnKeyType="done"
             blurOnSubmit={true}
             onSubmitEditing={() => Keyboard.dismiss()}
-            autoComplete="off"
-            textContentType="none"
-            importantForAutofill="no"
-            autoCorrect={false}
             autoCapitalize="words"
           />
         </View>
 
-        <TouchableOpacity style={commonStyles.button} onPress={handleRegister}>
-          <Icon name="account-plus" size={24} color={colors.white} />
-          <Text style={commonStyles.buttonText}>Registrarme</Text>
+        <TouchableOpacity style={commonStyles.button} onPress={handleSave}>
+          <Icon name="content-save" size={24} color={colors.white} />
+          <Text style={commonStyles.buttonText}>Guardar cambios</Text>
         </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flexGrow: 1, backgroundColor: '#F6FFF8', justifyContent: 'center', padding: 18 },
-  label: { fontWeight: 'bold', marginTop: 16, marginBottom: 4, color: '#22223B' },
-  input: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 8,
-    fontSize: 16,
-    color: '#22223B',
-    borderWidth: 1,
-    borderColor: '#6FCF97'
-  },
-  button: {
-    backgroundColor: '#6FCF97',
-    borderRadius: 20,
-    paddingVertical: 14,
-    alignItems: 'center',
-    marginTop: 16,
-    marginBottom: 24
-  },
-  buttonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 18,
-    marginTop: 8,
-    justifyContent: 'space-between',
-  },
-  backBtn: {
-    padding: 4,
-  },
-  headerTitle: {
-    flex: 1,
-    textAlign: 'center',
-    fontSize: 24,
-    color: '#219653',
-    fontWeight: 'bold',
-  },
-});

@@ -12,3 +12,13 @@ export const getUserById = async (id: number) => {
 
   return response.data;
 };
+
+export const updateUser = async (id: number, data: any) => {
+  const token = await getToken();
+  const response = await api.put(`/users/${id}`, data, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return response.data;
+};

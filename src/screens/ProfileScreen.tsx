@@ -15,6 +15,7 @@ import { getToken, removeToken } from '../storage/token';
 import { jwtDecode } from 'jwt-decode';
 import { getMyPets, updatePetById, deletePetById } from '../services/pets';
 import { RefreshControl } from 'react-native';
+import UserCard from '../components/UserCard';
 
 
 const menuItems = [
@@ -45,19 +46,21 @@ export default function ProfileScreen({ navigation }: Props) {
     pet_type: 'dog',
     description: '',
   });
+  const [showUserModal, setShowUserModal] = useState(false);
+
+  const fetchUser = async () => {
+    try {
+      const token = await getToken();
+      if (!token) return;
+      const decoded: any = jwtDecode(token);
+      const userData = await getUserById(decoded.id);
+      setUser(userData);
+    } catch (error) {
+      console.error('Error cargando usuario:', error);
+    }
+  };
 
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const token = await getToken();
-        if (!token) return;
-        const decoded: any = jwtDecode(token);
-        const userData = await getUserById(decoded.id);
-        setUser(userData);
-      } catch (error) {
-        console.error('Error cargando usuario:', error);
-      }
-    };
     fetchUser();
   }, []);
   const loadPets = async () => {
@@ -141,6 +144,14 @@ export default function ProfileScreen({ navigation }: Props) {
     ]);
   };
 
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      
+      fetchUser(); 
+    });
+    return unsubscribe;
+  }, [navigation]);
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['top']}>
       <ScrollView
@@ -154,18 +165,17 @@ export default function ProfileScreen({ navigation }: Props) {
 
         <View style={styles.profileCard}>
           <View style={styles.profileHeader} />
-          <View style={styles.avatarBox}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>{user?.name?.substring(0, 2).toUpperCase() || 'US'}</Text>
+          <TouchableOpacity onPress={() => setShowUserModal(true)} activeOpacity={0.8}>
+            <View style={styles.avatarBox}>
+              <View style={styles.avatar}>
+                <Text style={styles.avatarText}>{user?.name?.substring(0, 2).toUpperCase() || 'US'}</Text>
+              </View>
             </View>
-          </View>
-          <View style={styles.profileInfo}>
-            <Text style={styles.profileName}>{user?.name}</Text>
-            <Text style={styles.profileEmail}>{user?.email}</Text>
-            <TouchableOpacity style={styles.editBtn}>
-              <Text style={styles.editBtnText}>Editar perfil</Text>
-            </TouchableOpacity>
-          </View>
+            <View style={styles.profileInfo}>
+              <Text style={styles.profileName}>{user?.name}</Text>
+              <Text style={styles.profileEmail}>{user?.email}</Text>
+            </View>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.section}>
@@ -194,7 +204,8 @@ export default function ProfileScreen({ navigation }: Props) {
                 <PetCard {...pet} />
               </TouchableOpacity>
             ))
-          )}
+          )
+          }
         </View>
 
         <Modal
@@ -262,6 +273,28 @@ export default function ProfileScreen({ navigation }: Props) {
                     </>
                   )}
                 </View>
+              </TouchableWithoutFeedback>
+            </View>
+          </TouchableWithoutFeedback>
+        </Modal>
+
+        <Modal
+          visible={showUserModal}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setShowUserModal(false)}
+        >
+          <TouchableWithoutFeedback onPress={() => setShowUserModal(false)}>
+            <View style={styles.modalOverlay}>
+              <TouchableWithoutFeedback>
+                <UserCard
+                  user={user}
+                  onEdit={() => {
+                    setShowUserModal(false);
+                    navigation.navigate('EditProfile');
+                  }}
+                  onClose={() => setShowUserModal(false)}
+                />
               </TouchableWithoutFeedback>
             </View>
           </TouchableWithoutFeedback>
@@ -364,5 +397,10 @@ const styles = StyleSheet.create({
     maxWidth: 400,
     alignItems: 'stretch',
     elevation: 2,
+  },
+  label: {
+    fontSize: 14,
+    color: '#22223B',
+    marginBottom: 4,
   },
 });
