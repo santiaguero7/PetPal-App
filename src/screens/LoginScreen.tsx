@@ -7,6 +7,7 @@ import {
   Keyboard,
   Platform,
   Alert,
+  Image,
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -43,8 +44,8 @@ export default function LoginScreen({ navigation }: Props) {
       style={{ flex: 1, backgroundColor: '#F6FFF8' }}
       contentContainerStyle={{
         flexGrow: 1,
-        justifyContent: 'flex-start', 
-        paddingTop: 150, 
+        justifyContent: 'flex-start',
+        paddingTop: 150,
         paddingHorizontal: 24,
         paddingBottom: 24,
       }}
@@ -52,11 +53,14 @@ export default function LoginScreen({ navigation }: Props) {
       enableOnAndroid={true}
       extraScrollHeight={Platform.OS === 'ios' ? 20 : 20}
     >
-      <Icon
-        name="paw"
-        size={60}
-        color={colors.primary}
-        style={{ alignSelf: 'center', marginBottom: 8 }}
+      <Image
+        source={require('../../assets/LogoPetPal.png')}
+        style={{
+          width: '100%',
+          height: 170,
+          resizeMode: 'contain',
+          marginTop: 24,
+        }}
       />
 
       <Text
@@ -110,6 +114,7 @@ export default function LoginScreen({ navigation }: Props) {
         color={colors.secondary}
         onPress={() => navigation.navigate('Register')}
       />
+
     </KeyboardAwareScrollView>
   );
 }
