@@ -16,6 +16,13 @@ type Props = {
   showActions?: boolean;
 };
 
+const sizeLabels: Record<string, string> = {
+  small: 'Pequeños',
+  medium: 'Medianos',
+  large: 'Grandes',
+  all: 'Todos',
+};
+
 export default function PetPalPostCard({
   service_type,
   price_per_hour,
@@ -40,7 +47,11 @@ export default function PetPalPostCard({
       </Text>
       {location && <Text style={styles.info}>Zona: {location}</Text>}
       {pet_type && <Text style={styles.info}>Tipo: {pet_type === 'dog' ? 'Perro' : 'Gato'}</Text>}
-      {size_accepted && <Text style={styles.info}>Tamaño aceptado: {size_accepted}</Text>}
+      {size_accepted && (
+        <Text style={styles.info}>
+          Tamaño aceptado: {sizeLabels[size_accepted] || size_accepted}
+        </Text>
+      )}
       {experience && <Text style={styles.info}>Experiencia: {experience}</Text>}
       {price_per_hour !== null && price_per_hour !== undefined && (
         <Text style={styles.info}>Precio/hora: ${price_per_hour}</Text>
@@ -56,6 +67,11 @@ export default function PetPalPostCard({
           <TouchableOpacity style={[styles.actionBtn, styles.deleteBtn]} onPress={onDelete}>
             <Text style={[styles.actionText, styles.deleteText]}>Eliminar</Text>
           </TouchableOpacity>
+          {onClose && (
+            <TouchableOpacity style={styles.actionBtn} onPress={onClose}>
+              <Text style={styles.actionText}>Cerrar</Text>
+            </TouchableOpacity>
+          )}
         </View>
       )}
     </View>

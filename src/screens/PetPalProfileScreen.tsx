@@ -5,6 +5,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { colors } from '../themes/colors';
 import ScreenHeader from '../components/ScreenHeader';
 import { getUserById } from '../services/users';
+import { commonStyles } from '../themes/commonStyles';
 import { getToken, removeToken } from '../storage/token';
 import { jwtDecode } from 'jwt-decode';
 import PetPalPostCard from '../components/PetPalPostCard';
@@ -110,16 +111,14 @@ export default function PetPalProfileScreen({ navigation }: PetPalProfileScreenP
     }
   };
 
-  const handleEditPost = async () => {
+  const handleEditPost = async (values: any) => {
     if (!selectedPost) return;
     try {
       const token = await getToken();
-      await api.put(`/petpals/${selectedPost.id}`, editValues, {
+      await api.put(`/petpals/${selectedPost.id}`, values, {
         headers: { Authorization: `Bearer ${token}` }
       });
       await loadPosts();
-      setEditMode(false);
-      setSelectedPost(null);
     } catch (e) {
       Alert.alert('Error', 'No se pudo actualizar la publicación');
     }
@@ -224,44 +223,39 @@ export default function PetPalProfileScreen({ navigation }: PetPalProfileScreenP
             }}
           >
             <View style={styles.modalOverlay}>
-              <TouchableWithoutFeedback>
-                <View style={styles.modalFormContent}>
-                  {selectedPost && !editMode && (
-                    <PetPalPostCard
-                      {...selectedPost}
-                      showActions
-                      onEdit={() => setEditMode(true)}
-                      onDelete={handleDeletePost}
-                      onClose={() => {
-                        setEditMode(false);
-                        setSelectedPost(null);
-                      }}
-                    />
-                  )}
-                  {selectedPost && editMode && (
-                    <>
-                      <PetPalPostForm
-                        initialValues={editValues}
-                        onSubmit={(values) => setEditValues(values)}
-                        submitText="Guardar"
-                      />
-                      <TouchableOpacity
-                        style={[styles.button, { backgroundColor: colors.primary, marginTop: 8 }]}
-                        onPress={handleEditPost}
-                      >
-                        <Text style={styles.buttonText}>Guardar</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={[styles.button, { backgroundColor: colors.secondary }]}
-                        onPress={() => setEditMode(false)}
-                      >
-                        <Text style={styles.buttonText}>Cancelar</Text>
-                      </TouchableOpacity>
-                    </>
-                  )}
-                </View>
-              </TouchableWithoutFeedback>
-            </View>
+  <TouchableWithoutFeedback>
+    <View style={styles.modalFormContent}>
+      {selectedPost && !editMode && (
+        <PetPalPostCard
+          {...selectedPost}
+          showActions
+          onEdit={() => setEditMode(true)}
+          onDelete={handleDeletePost}
+          onClose={() => {
+            setEditMode(false);
+            setSelectedPost(null);
+          }}
+        />
+      )}
+      {selectedPost && editMode && (
+        <PetPalPostForm
+          initialValues={editValues}
+          onSubmit={async (values) => {
+            await handleEditPost(values);
+            setEditMode(false);
+            setSelectedPost(null);
+          }}
+          onCancel={() => {
+            setEditMode(false);
+            setSelectedPost(null);
+          }}
+          submitText="Guardar"
+          styles={commonStyles}
+        />
+      )}
+    </View>
+  </TouchableWithoutFeedback>
+</View>
           </TouchableWithoutFeedback>
         </Modal>
 
@@ -371,6 +365,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.18)',
     justifyContent: 'center',
     alignItems: 'center',
+    paddingVertical: 52, 
   },
   modalFormContent: {
     backgroundColor: '#fff',
@@ -381,6 +376,7 @@ const styles = StyleSheet.create({
     maxWidth: 400,
     alignItems: 'stretch',
     elevation: 2,
+    
   },
   button: {
     borderRadius: 20,

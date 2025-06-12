@@ -99,10 +99,13 @@ export default function AddPubScreen({ navigation }: NativeStackScreenProps<Root
 
         <PetPalPostForm
           initialValues={formValues}
-          onSubmit={handleSubmit}
-          submitText="Guardar"
+          onSubmit={setFormValues}
           styles={styles}
         />
+
+        <TouchableOpacity style={styles.button} onPress={() => handleSubmit(formValues)}>
+          <Text style={styles.buttonText}>Guardar</Text>
+        </TouchableOpacity>
 
         {posts.length === 0 ? (
           null

@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Modal, Keyboard, StyleSheet, FlatList, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Modal, FlatList, Keyboard, StyleSheet, ScrollView } from 'react-native';
 import { colors } from '../themes/colors';
 
 const serviceTypes = [
@@ -24,6 +24,7 @@ type Props = {
   onSubmit: (values: any) => void;
   submitText?: string;
   styles?: any;
+  onCancel?: () => void; 
 };
 
 export default function PetPalPostForm({
@@ -31,13 +32,8 @@ export default function PetPalPostForm({
   onSubmit,
   submitText = 'Publicar',
   styles = defaultStyles,
+  onCancel, 
 }: Props) {
-  // Referencias para inputs
-  const experienceRef = useRef<TextInput>(null) as React.RefObject<TextInput>;
-  const locationRef = useRef<TextInput>(null) as React.RefObject<TextInput>;
-  const priceHourRef = useRef<TextInput>(null) as React.RefObject<TextInput>;
-  const priceDayRef = useRef<TextInput>(null) as React.RefObject<TextInput>;
-
   const [service_type, setServiceType] = useState(initialValues.service_type || 'dog walker');
   const [modalService, setModalService] = useState(false);
 
@@ -52,9 +48,22 @@ export default function PetPalPostForm({
   const [size_accepted, setSizeAccepted] = useState(initialValues.size_accepted || 'medium');
   const [modalSize, setModalSize] = useState(false);
 
-  // Para avanzar automáticamente al siguiente input
-  const focusNext = (ref: React.RefObject<TextInput>) => {
-    ref.current?.focus();
+  const experienceRef = useRef<TextInput>(null);
+  const locationRef = useRef<TextInput>(null);
+  const priceHourRef = useRef<TextInput>(null);
+  const priceDayRef = useRef<TextInput>(null);
+
+  const handleFormSubmit = () => {
+    onSubmit({
+      ...initialValues,
+      service_type,
+      pet_type,
+      size_accepted,
+      experience,
+      location,
+      price_per_hour,
+      price_per_day,
+    });
   };
 
   return (
@@ -149,7 +158,7 @@ export default function PetPalPostForm({
                 data={sizes}
                 keyExtractor={(item) => item.value}
                 style={{ alignSelf: 'stretch' }}
-                renderItem={({ item }) => (
+                renderItem={({ item }: { item: { label: string; value: string } }) => (
                   <TouchableOpacity onPress={() => { setSizeAccepted(item.value); setModalSize(false); }}>
                     <Text style={modalStyles.modalOption}>{item.label}</Text>
                   </TouchableOpacity>
@@ -168,12 +177,11 @@ export default function PetPalPostForm({
         <TextInput
           ref={experienceRef}
           style={styles.input}
-        
           value={experience}
           onChangeText={setExperience}
           placeholder="Ej: 2 años paseando perros grandes y medianos"
           returnKeyType="next"
-          onSubmitEditing={() => focusNext(locationRef)}
+          onSubmitEditing={() => locationRef.current?.focus()}
           blurOnSubmit={false}
         />
 
@@ -186,7 +194,7 @@ export default function PetPalPostForm({
           onChangeText={setLocation}
           placeholder="Ej: Nueva Córdoba"
           returnKeyType="next"
-          onSubmitEditing={() => focusNext(priceHourRef)}
+          onSubmitEditing={() => priceHourRef.current?.focus()}
           blurOnSubmit={false}
         />
 
@@ -200,7 +208,7 @@ export default function PetPalPostForm({
           keyboardType="numeric"
           placeholder="Ej: 15"
           returnKeyType="next"
-          onSubmitEditing={() => focusNext(priceDayRef)}
+          onSubmitEditing={() => priceDayRef.current?.focus()}
           blurOnSubmit={false}
         />
 
@@ -218,21 +226,25 @@ export default function PetPalPostForm({
           blurOnSubmit={true}
         />
 
-        {/* Botón */}
+        {/* BOTÓN GUARDAR */}
         <TouchableOpacity
           style={styles.button}
-          onPress={() => onSubmit({
-            service_type,
-            price_per_hour: price_per_hour ? Number(price_per_hour) : null,
-            price_per_day: price_per_day ? Number(price_per_day) : null,
-            experience,
-            location,
-            pet_type,
-            size_accepted,
-          })}
+          onPress={handleFormSubmit}
         >
           <Text style={styles.buttonText}>{submitText}</Text>
         </TouchableOpacity>
+
+        {onCancel && (
+          <TouchableOpacity
+            style={[
+              styles.button,
+              { backgroundColor: colors.secondary, marginTop: 0, marginBottom: 0 }
+            ]}
+            onPress={onCancel}
+          >
+            <Text style={[styles.buttonText, { color: '#fff' }]}>Cancelar</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </ScrollView>
   );

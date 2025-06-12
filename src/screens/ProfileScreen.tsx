@@ -42,7 +42,8 @@ export default function ProfileScreen({ navigation }: Props) {
     breed: '',
     age: 0,
     weight: null,
-    pet_type: 'dog'
+    pet_type: 'dog',
+    description: '',
   });
 
   useEffect(() => {
