@@ -55,20 +55,20 @@ export default function SearchScreen({ navigation }: any) {
 
   const selectedPet = pets.find(p => p.id === selectedPetId);
   const sizeLabel = (w: number | null) =>
-    w == null ? 'Desconocido' : w < 10 ? 'Chica' : w < 20 ? 'Mediana' : 'Grande';
+    w == null ? 'Desconocido' : w < 8 ? 'Chico' : w < 15 ? 'Mediano' : 'Grande';
 
   const weightToSizeLabel = (w: number | null): string =>
-  w === null ? 'Desconocido' : w < 10 ? 'Chica' : w < 20 ? 'Mediana' : 'Grande';
+    w === null ? 'Desconocido' : w < 8 ? 'Chico' : w < 15 ? 'Mediano' : 'Grande';
 
-const translateSize = (size: string): string => {
-  switch (size) {
-    case 'small': return 'Chica';
-    case 'medium': return 'Mediana';
-    case 'large': return 'Grande';
-    case 'all': return 'Todos';
-    default: return 'Desconocido';
-  }
-};
+  const translateSize = (size: string): string => {
+    switch (size) {
+      case 'small': return 'Chico';
+      case 'medium': return 'Mediano';
+      case 'large': return 'Grande';
+      case 'all': return 'Todos';
+      default: return 'Desconocido';
+    }
+  };
 
 
 
@@ -90,24 +90,34 @@ const translateSize = (size: string): string => {
   };
 
   // Búsqueda de PetPals
+  // 1) Cuando cambias de mascota, reseteá la lista de petpals
+  useEffect(() => {
+    setPetpals([]);
+  }, [selectedPetId]);
+
+  // 2) Búsqueda de PetPals cuando estén todos los filtros listos
   useEffect(() => {
     const fetchPetpals = async () => {
-      if (!selectedPetId || !service) {
-        setPetpals([]);
-        return;
-      }
+      // Si no hay mascota o servicio, no hacemos nada (pero no limpiamos el array)
+      if (!selectedPetId || !service) return;
+
       setLoading(true);
       const svc = service === 'Paseo de perros' ? 'dog walker' : 'caregiver';
+
       try {
         const results = await searchPetpalsByMascota(selectedPetId, location, svc);
+        console.log('▶︎ Petpals encontrados:', results);
         setPetpals(results);
       } catch (e) {
         console.error(e);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
+
     fetchPetpals();
   }, [selectedPetId, location, service]);
+
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
