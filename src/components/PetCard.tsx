@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { colors } from '../themes/colors';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 type Props = {
   nombre?: string;
@@ -19,6 +20,7 @@ type Props = {
   onDelete?: () => void;
   onClose?: () => void;
   showActions?: boolean;
+  weight?: number;
 };
 
 export default function PetCard({
@@ -37,6 +39,7 @@ export default function PetCard({
   onDelete,
   onClose,
   showActions = false,
+  weight,
 }: Props) {
   const mostrarNombre = nombre || name || 'Mascota';
   const mostrarEspecie = especie || (pet_type === 'dog' ? 'Perro' : pet_type === 'cat' ? 'Gato' : '');
@@ -44,15 +47,32 @@ export default function PetCard({
   const mostrarEdad = edad || age || '?';
   const mostrarDescripcion = descripcion || description;
 
+  const getSizeLabel = (w: number | null) => {
+    if (w == null) return 'Desconocido';
+    if (w <= 8) return 'Chico';
+    if (w <= 15) return 'Mediano';
+    return 'Grande';
+  };
+
   return (
     <View style={styles.card}>
-      <Text style={styles.nombre}>{mostrarNombre} ({mostrarEspecie})</Text>
-      {tamano && <Text style={styles.info}>Tamaño: {tamano}</Text>}
-      {mostrarRaza && <Text style={styles.info}>Raza: {mostrarRaza}</Text>}
-      <Text style={styles.info}>Edad: {mostrarEdad} años</Text>
-      {mostrarDescripcion ? (
-        <Text style={styles.descripcion}>{mostrarDescripcion}</Text>
-      ) : null}
+      <View style={styles.cardContent}>
+        <Text style={styles.petName}>{name}</Text>
+        {/* Mostrar tamaño si existe */}
+        {typeof weight === 'number' && (
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}> 
+          </View>
+        )}
+        {tamano && <Text style={styles.info}>Tamaño: {tamano}</Text>}
+        {mostrarRaza && <Text style={styles.info}>Raza: {mostrarRaza}</Text>}
+        <Text style={styles.petInfo}>Edad: {age} años</Text>
+        <Text style={styles.petInfo}>
+          Peso: {weight} kg ({getSizeLabel(weight ?? null)})
+        </Text>
+        {mostrarDescripcion ? (
+          <Text style={styles.descripcion}>{mostrarDescripcion}</Text>
+        ) : null}
+      </View>
 
       {showActions && (
         <View style={styles.actionsRow}>
@@ -82,11 +102,19 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 4,
   },
-  nombre: {
+  cardContent: {
+    marginBottom: 8,
+  },
+  petName: {
     fontSize: 18,
     fontWeight: 'bold',
     color: colors.primary || '#6EC1E4',
     marginBottom: 4,
+  },
+  petInfo: {
+    fontSize: 15,
+    color: colors.text || '#22223B',
+    marginBottom: 2,
   },
   info: {
     fontSize: 15,
