@@ -20,12 +20,18 @@ export default function PetPalHomeScreen({ navigation }: any) {
 
         <Text style={styles.sectionTitle}>Accesos rápidos</Text>
         <View style={styles.servicesRow}>
-          <TouchableOpacity style={styles.serviceCard} onPress={() => navigation.navigate({ name: 'PetPalRequest', params: undefined })}>
+          <TouchableOpacity
+            style={styles.serviceCard}
+            onPress={() => navigation.navigate('Solicitudes')}
+          >
             <Icon name="clipboard-list" size={28} color={colors.primary} />
             <Text style={styles.serviceTitle}>Solicitudes</Text>
             <Text style={styles.serviceDesc}>Gestiona tus reservas</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.serviceCard} onPress={() => navigation.navigate({ name: 'PetPalProfile', params: undefined })}>
+          <TouchableOpacity
+            style={styles.serviceCard}
+            onPress={() => navigation.navigate('PerfilPetPal')}
+          >
             <Icon name="account" size={28} color={colors.primary} />
             <Text style={styles.serviceTitle}>Mi Perfil</Text>
             <Text style={styles.serviceDesc}>Edita tu información</Text>

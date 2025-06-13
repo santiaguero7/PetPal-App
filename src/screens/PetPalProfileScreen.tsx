@@ -12,7 +12,7 @@ import PetPalPostCard from '../components/PetPalPostCard';
 import PetPalPostForm from '../components/PetPalPostForm';
 import axios from 'axios';
 import type { StackNavigationProp } from '@react-navigation/stack';
-import type { RootStackParamList } from '../navigation'; // <--- usa el global
+import type { RootStackParamList } from '../navigation'; 
 import { getMyPetpals } from '../services/petpals';
 import UserCard from '../components/UserCard';
 

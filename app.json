@@ -4,7 +4,7 @@
     "slug": "PetPal-App",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/LogoPetPal.png",
+    "icon": "./assets/LogoPetPal2.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
