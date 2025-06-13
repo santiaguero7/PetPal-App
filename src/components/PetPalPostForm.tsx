@@ -1,5 +1,15 @@
-import React, { useRef, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Modal, FlatList, Keyboard, StyleSheet, ScrollView } from 'react-native';
+import React, { useRef, useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Modal,
+  FlatList,
+  Keyboard,
+  StyleSheet,
+  ScrollView,
+} from 'react-native';
 import { colors } from '../themes/colors';
 
 const serviceTypes = [
@@ -21,18 +31,16 @@ const sizes = [
 
 type Props = {
   initialValues?: any;
-  onSubmit: (values: any) => void;
-  submitText?: string;
+  onChange: (values: any) => void;
   styles?: any;
-  onCancel?: () => void; 
+  onCancel?: () => void;
 };
 
 export default function PetPalPostForm({
   initialValues = {},
-  onSubmit,
-  submitText = 'Publicar',
+  onChange,
   styles = defaultStyles,
-  onCancel, 
+  onCancel,
 }: Props) {
   const [service_type, setServiceType] = useState(initialValues.service_type || 'dog walker');
   const [modalService, setModalService] = useState(false);
@@ -53,9 +61,8 @@ export default function PetPalPostForm({
   const priceHourRef = useRef<TextInput>(null);
   const priceDayRef = useRef<TextInput>(null);
 
-  const handleFormSubmit = () => {
-    onSubmit({
-      ...initialValues,
+  useEffect(() => {
+    onChange({
       service_type,
       pet_type,
       size_accepted,
@@ -64,7 +71,7 @@ export default function PetPalPostForm({
       price_per_hour,
       price_per_day,
     });
-  };
+  }, [service_type, pet_type, size_accepted, experience, location, price_per_hour, price_per_day]);
 
   return (
     <ScrollView
@@ -158,7 +165,7 @@ export default function PetPalPostForm({
                 data={sizes}
                 keyExtractor={(item) => item.value}
                 style={{ alignSelf: 'stretch' }}
-                renderItem={({ item }: { item: { label: string; value: string } }) => (
+                renderItem={({ item }) => (
                   <TouchableOpacity onPress={() => { setSizeAccepted(item.value); setModalSize(false); }}>
                     <Text style={modalStyles.modalOption}>{item.label}</Text>
                   </TouchableOpacity>
@@ -226,19 +233,12 @@ export default function PetPalPostForm({
           blurOnSubmit={true}
         />
 
-        {/* BOTÓN GUARDAR */}
-        <TouchableOpacity
-          style={styles.button}
-          onPress={handleFormSubmit}
-        >
-          <Text style={styles.buttonText}>{submitText}</Text>
-        </TouchableOpacity>
-
+        {/* Si querés mostrar botón "Cancelar" */}
         {onCancel && (
           <TouchableOpacity
             style={[
               styles.button,
-              { backgroundColor: colors.secondary, marginTop: 0, marginBottom: 0 }
+              { backgroundColor: colors.secondary, marginTop: 0, marginBottom: 0 },
             ]}
             onPress={onCancel}
           >
@@ -260,7 +260,7 @@ const defaultStyles = StyleSheet.create({
     fontSize: 16,
     color: '#22223B',
     borderWidth: 1,
-    borderColor: '#6FCF97'
+    borderColor: '#6FCF97',
   },
   button: {
     backgroundColor: '#6FCF97',
@@ -268,7 +268,7 @@ const defaultStyles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: 'center',
     marginTop: 16,
-    marginBottom: 8
+    marginBottom: 8,
   },
   buttonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
 });

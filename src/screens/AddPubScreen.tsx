@@ -99,7 +99,7 @@ export default function AddPubScreen({ navigation }: NativeStackScreenProps<Root
 
         <PetPalPostForm
           initialValues={formValues}
-          onSubmit={setFormValues}
+          onChange={setFormValues}
           styles={styles}
         />
 
