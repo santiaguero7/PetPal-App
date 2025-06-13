@@ -16,3 +16,38 @@ export const createReservation = async (payload: {
   });
   return res.data;
 };
+
+export async function getPetPalReservations() {
+  const token = await getToken();
+  const res = await fetch('https://petpal-backend-production.up.railway.app/api/reservations/petpal/1', {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const json = await res.json();
+  console.log('Respuesta reservas PetPal:', json);
+  return json.data;
+};
+
+export async function updateReservationStatus(
+  id: number,
+  status: 'accepted' | 'rejected'
+): Promise<any> {
+  const token = await getToken();
+  const response = await fetch(
+    `https://petpal-backend-production.up.railway.app/api/reservations/petpal/${id}`,
+    {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ status }),
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to update reservation status');
+  }
+
+  return response.json();
+}
