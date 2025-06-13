@@ -33,6 +33,7 @@ type Pet = {
 
 type Petpal = {
   id: number;
+  user_id: number
   service_type: 'dog walker' | 'caregiver';
   price_per_hour: number;
   price_per_day: number | null;
@@ -74,7 +75,7 @@ export default function SearchScreen({ navigation }: any) {
       default: return 'Desconocido';
     }
   };
-    const requestService = async (petpalId: number, date: Date) => {
+  const requestService = async (petpalId: number, date: Date) => {
     if (!selectedPetId) {
       Alert.alert('Error', 'Debes seleccionar una mascota primero.');
       return;
@@ -88,7 +89,7 @@ export default function SearchScreen({ navigation }: any) {
       // formatea sólo YYYY-MM-DD y hora fija (ej: a las 10am)
       const dateOnly = date.toISOString().split('T')[0];
       const date_start = `${dateOnly}T10:00:00`;
-      const date_end   = `${dateOnly}T11:00:00`;
+      const date_end = `${dateOnly}T11:00:00`;
 
       const body = {
         client_id,
@@ -114,7 +115,6 @@ export default function SearchScreen({ navigation }: any) {
       Alert.alert('Error', err.message || 'No se pudo crear la reserva.');
     }
   };
-
 
 
 
@@ -251,8 +251,11 @@ export default function SearchScreen({ navigation }: any) {
               key={c.id}
               petpal={c}
               translateSize={translateSize}
-              onPressProfile={(id) => navigation.navigate('Perfil', { caretakerId: id })}
-              onRequest={requestService}
+              onPressProfile={id => navigation.navigate('Perfil', { caretakerId: id })}
+              onRequest={(_ignoredPetpalProfileId, date) =>
+                // aquí le pasamos el user_id en lugar de petpal_profiles.id
+                requestService(c.user_id, date)
+              }
             />
           ))
         )}

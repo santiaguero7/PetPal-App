@@ -55,8 +55,8 @@ const PetPalCard: React.FC<PetPalCardProps> = ({
                 {petpal.price_per_hour
                   ? `$${petpal.price_per_hour}/h`
                   : petpal.price_per_day
-                  ? `$${petpal.price_per_day}/día`
-                  : 'Precio no especificado'}
+                    ? `$${petpal.price_per_day}/día`
+                    : 'Precio no especificado'}
               </Text>
             </View>
             <View style={styles.caretakerTag}>
@@ -154,7 +154,6 @@ const PetPalCard: React.FC<PetPalCardProps> = ({
                 <DateTimePicker
                   value={reservationDate}
                   mode="date"
-                  display="calendar"
                   onChange={handleChangeDate}
                   minimumDate={new Date()}
                 />
@@ -163,7 +162,7 @@ const PetPalCard: React.FC<PetPalCardProps> = ({
                   onPress={() => {
                     setShowPicker(false);
                     setModalVisible(false);
-                    onRequest(petpal.id, reservationDate);
+                    onRequest(petpal.id, reservationDate);  // ahora sí existe
                   }}
                 >
                   <Text style={commonStyles.buttonText}>Aceptar fecha</Text>
@@ -171,7 +170,7 @@ const PetPalCard: React.FC<PetPalCardProps> = ({
               </>
             )}
 
-            <View style={[styles.modalButtonsRow, { marginTop: 12 }]}>  
+            <View style={[styles.modalButtonsRow, { marginTop: 12 }]}>
               <TouchableOpacity
                 style={[commonStyles.button, styles.modalButton, { backgroundColor: '#e53935' }]}
                 onPress={() => setModalVisible(false)}
@@ -282,9 +281,9 @@ const styles = StyleSheet.create({
     maxWidth: 180,
   },
   acceptButton: {
-    marginTop: 8,
-    alignSelf: 'center',
-    width: '60%',
+    marginTop: 12,
+    backgroundColor: colors.primary,
+    alignSelf: 'stretch',
   },
 });
 
