@@ -8,21 +8,23 @@ import {
   ScrollView,
   ActivityIndicator,
   RefreshControl,
-  Alert
+  Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '../themes/colors';
-import { commonStyles } from '../themes/commonStyles';
 import ScreenHeader from '../components/ScreenHeader';
-import api from '../../api';              // tu instancia axios/fetch
+import api from '../../api';
 import { getToken } from '../storage/token';
 import {jwtDecode} from 'jwt-decode';
 
 type Reservation = {
   id: number;
   petpal_id: number;
+  petpal_name: string;
   pet_id: number;
+  pet_name: string;
+  client_name: string;
   date_start: string;
   status: 'pending' | 'accepted' | 'completed' | 'rejected';
 };
@@ -37,21 +39,27 @@ export default function ServicesScreen() {
     setLoading(true);
     try {
       const token = await getToken();
-      if (!token) throw new Error('No hay token');
+      if (!token) throw new Error('No hay token disponible');
       const { id: client_id }: any = jwtDecode(token);
       const resp = await api.get(`/reservations/client/${client_id}`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
       setReservations(resp.data.data);
-    } catch (e: any) {
-      console.error(e);
-      Alert.alert('Error', 'No se pudieron cargar tus reservas');
+    } catch (err: any) {
+      if (err.response?.status !== 404) {
+        console.error(err);
+        Alert.alert('Error', 'No se pudieron cargar tus reservas');
+      } else {
+        setReservations([]);
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { loadReservations(); }, []);
+  useEffect(() => {
+    loadReservations();
+  }, []);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -59,50 +67,92 @@ export default function ServicesScreen() {
     setRefreshing(false);
   };
 
-  const upcoming = reservations.filter(r => r.status === 'pending' || r.status === 'accepted');
-  const past     = reservations.filter(r => r.status === 'completed');
+  // Filtrar próximas vs pasadas
+  const upcoming = reservations.filter(r =>
+    r.status === 'pending' || r.status === 'accepted'
+  );
+  const past = reservations.filter(r => r.status === 'completed');
 
+  // Formatos
+  const fmtDate = (iso: string) =>
+    new Date(iso).toLocaleDateString('es-ES', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+  const fmtTime = (iso: string) =>
+    new Date(iso).toLocaleTimeString('es-ES', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+  // Render de tarjeta
   const renderCard = (r: Reservation) => {
-    const d = new Date(r.date_start);
-    const dateStr = d.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
-    const timeStr = d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-    const statusLabel = r.status === 'pending'
-      ? 'Pendiente'
-      : r.status === 'accepted'
-      ? 'Confirmado'
-      : 'Completado';
-    const statusStyle = r.status === 'completed'
-      ? styles.statusCompleted
-      : styles.statusConfirmed;
+    const statusLabel =
+      r.status === 'pending'
+        ? 'Pendiente'
+        : r.status === 'accepted'
+        ? 'Confirmado'
+        : 'Completado';
+    const statusStyle =
+      r.status === 'completed' ? styles.statusCompleted : styles.statusConfirmed;
 
     return (
       <View key={r.id} style={styles.card}>
         <View style={[styles.cardBar, { backgroundColor: colors.primary }]} />
         <View style={styles.cardContent}>
+          {/* Título con ID de reserva */}
+          <Text style={styles.reservationId}>Reserva #{r.id}</Text>
+
           <View style={styles.cardHeader}>
             <View style={styles.caretakerInfo}>
               <View style={styles.avatar}>
                 <Icon name="account" size={28} color={colors.secondary} />
               </View>
               <View>
-                <Text style={styles.caretakerName}>PetPal #{r.petpal_id}</Text>
-                <Text style={styles.serviceName}>{r.status === 'completed' ? 'Servicio' : 'Reserva'}</Text>
+                <Text style={styles.caretakerName}>{r.petpal_name}</Text>
+                <Text style={styles.clientName}>
+                  Cliente: {r.client_name}
+                </Text>
               </View>
             </View>
-            <View>
-              <Text style={[styles.status, statusStyle]}>{statusLabel}</Text>
-            </View>
+            <Text style={[styles.status, statusStyle]}>{statusLabel}</Text>
+          </View>
+
+          {/* Datos de la mascota */}
+          <View style={styles.infoRow}>
+            <Icon
+              name="paw"
+              size={16}
+              color={colors.secondary}
+              style={{ marginRight: 6 }}
+            />
+            <Text style={styles.infoText}>Mascota: {r.pet_name}</Text>
+          </View>
+
+          {/* Fecha y hora */}
+          <View style={styles.infoRow}>
+            <Icon
+              name="calendar"
+              size={16}
+              color={colors.secondary}
+              style={{ marginRight: 6 }}
+            />
+            <Text style={styles.infoText}>{fmtDate(r.date_start)}</Text>
           </View>
           <View style={styles.infoRow}>
-            <Icon name="calendar" size={16} color={colors.secondary} style={{ marginRight: 6 }} />
-            <Text style={styles.infoText}>{dateStr}</Text>
+            <Icon
+              name="clock-outline"
+              size={16}
+              color={colors.secondary}
+              style={{ marginRight: 6 }}
+            />
+            <Text style={styles.infoText}>{fmtTime(r.date_start)}</Text>
           </View>
-          <View style={styles.infoRow}>
-            <Icon name="clock-outline" size={16} color={colors.secondary} style={{ marginRight: 6 }} />
-            <Text style={styles.infoText}>{timeStr}</Text>
-          </View>
+
+          {/* Acciones */}
           <View style={styles.actionsRow}>
-            {r.status === 'pending' || r.status === 'accepted' ? (
+            {(r.status === 'pending' || r.status === 'accepted') ? (
               <>
                 <TouchableOpacity style={styles.actionBtnOutline}>
                   <Text style={styles.actionBtnOutlineText}>Cancelar</Text>
@@ -123,20 +173,36 @@ export default function ServicesScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['top']}>
+    <SafeAreaView
+      style={{ flex: 1, backgroundColor: colors.background }}
+      edges={['top']}
+    >
       <ScrollView
         contentContainerStyle={{ padding: 18 }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
       >
-        <ScreenHeader title="Contrataciones" subtitle="Tus servicios reservados" />
+        <ScreenHeader
+          title="Contrataciones"
+          subtitle="Tus servicios reservados"
+        />
 
         {/* Tabs */}
         <View style={styles.tabsRow}>
           <TouchableOpacity
-            style={[styles.tabBtn, tab === 'upcoming' && styles.tabBtnActive]}
+            style={[
+              styles.tabBtn,
+              tab === 'upcoming' && styles.tabBtnActive,
+            ]}
             onPress={() => setTab('upcoming')}
           >
-            <Text style={[styles.tabBtnText, tab === 'upcoming' && styles.tabBtnTextActive]}>
+            <Text
+              style={[
+                styles.tabBtnText,
+                tab === 'upcoming' && styles.tabBtnTextActive,
+              ]}
+            >
               Próximas
             </Text>
           </TouchableOpacity>
@@ -144,37 +210,48 @@ export default function ServicesScreen() {
             style={[styles.tabBtn, tab === 'past' && styles.tabBtnActive]}
             onPress={() => setTab('past')}
           >
-            <Text style={[styles.tabBtnText, tab === 'past' && styles.tabBtnTextActive]}>
+            <Text
+              style={[
+                styles.tabBtnText,
+                tab === 'past' && styles.tabBtnTextActive,
+              ]}
+            >
               Pasadas
             </Text>
           </TouchableOpacity>
         </View>
 
         {/* Listado */}
-        <View style={{ marginTop: 18 }}>
-          {loading ? (
-            <ActivityIndicator size="large" color={colors.primary} />
-          ) : (tab === 'upcoming' ? upcoming : past).length === 0 ? (
-            <View style={styles.emptyBox}>
-              <Text style={styles.emptyText}>
-                {tab === 'upcoming'
-                  ? 'No tienes contrataciones próximas'
-                  : 'No tienes contrataciones pasadas'}
-              </Text>
-              {tab === 'upcoming' && (
-                <TouchableOpacity style={styles.actionBtn}>
-                  <Text style={styles.actionBtnText}>Buscar cuidadores</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-          ) : (
-            (tab === 'upcoming' ? upcoming : past).map(renderCard)
-          )}
-        </View>
+        {loading ? (
+          <ActivityIndicator
+            size="large"
+            color={colors.primary}
+            style={{ marginTop: 40 }}
+          />
+        ) : (tab === 'upcoming' ? upcoming : past).length === 0 ? (
+          <View style={styles.emptyBox}>
+            <Text style={styles.emptyText}>
+              {tab === 'upcoming'
+                ? 'No tienes contrataciones próximas'
+                : 'No tienes contrataciones pasadas'}
+            </Text>
+            {tab === 'upcoming' && (
+              <TouchableOpacity style={styles.actionBtn}>
+                <Text style={styles.actionBtnText}>
+                  Buscar cuidadores
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        ) : (
+          (tab === 'upcoming' ? upcoming : past).map(renderCard)
+        )}
       </ScrollView>
     </SafeAreaView>
   );
 }
+
+
 
 const styles = StyleSheet.create({
   tabsRow: { flexDirection: 'row', backgroundColor: colors.border, borderRadius: 20, marginBottom: 10, overflow: 'hidden' },
@@ -202,4 +279,15 @@ const styles = StyleSheet.create({
   actionBtnOutlineText: { color: colors.primary, fontWeight: 'bold' },
   emptyBox: { alignItems: 'center', marginTop: 40 },
   emptyText: { color: colors.muted, marginBottom: 16 },
+  // Título con ID de reserva
+  reservationId: {
+    fontSize: 12,
+    color: '#888',
+    marginBottom: 4,
+  },
+  // Texto “Cliente: …”
+  clientName: {
+    fontSize: 14,
+    color: colors.text,
+  },
 });
