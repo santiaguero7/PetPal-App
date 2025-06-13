@@ -4,7 +4,9 @@ import {
   Text,
   TouchableOpacity,
   Modal,
-  StyleSheet
+  StyleSheet,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -29,8 +31,7 @@ const PetPalCard: React.FC<PetPalCardProps> = ({
   const [reservationDate, setReservationDate] = useState(new Date());
 
   const handleChangeDate = (_: any, date?: Date) => {
-    if (date) setReservationDate(date);
-    setShowPicker(false);
+    if (date) setReservationDate(date); // no cerrar aún
   };
 
   return (
@@ -81,105 +82,114 @@ const PetPalCard: React.FC<PetPalCardProps> = ({
         transparent
         onRequestClose={() => setModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={commonStyles.modalTitle}>
-              {petpal.service_type === 'dog walker' ? 'Paseador' : 'Cuidador'} en {petpal.location}
-            </Text>
-
-            <View style={styles.infoCenter}>
-              <Icon
-                name={petpal.pet_type === 'dog' ? 'dog' : 'cat'}
-                size={54}
-                color={colors.primary}
-              />
-            </View>
-
-            <View style={styles.modalInfoBlock}>
-              <View style={styles.modalInfoRow}>
-                <Icon name="star" size={18} color="#FFD700" />
-                <Text style={styles.modalInfoText}>
-                  {petpal.experience || 'Sin experiencia especificada'}
+        <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
+          <View style={styles.modalOverlay}>
+            <TouchableWithoutFeedback onPress={() => {}}>
+              <View style={styles.modalContent}>
+                <Text style={[commonStyles.modalTitle, { textAlign: 'center' }]}>
+                  {petpal.service_type === 'dog walker' ? 'Paseador' : 'Cuidador'} en {petpal.location}
                 </Text>
-              </View>
-              <View style={styles.modalInfoRow}>
-                <Icon name="cash" size={18} color={colors.primary} />
-                <Text style={styles.modalInfoText}>
-                  {petpal.price_per_hour
-                    ? `$${petpal.price_per_hour}/h`
-                    : petpal.price_per_day
-                      ? `$${petpal.price_per_day}/día`
-                      : 'Precio no especificado'}
-                </Text>
-              </View>
-              <View style={styles.modalInfoRow}>
-                <Icon
-                  name={petpal.pet_type === 'dog' ? 'dog' : 'cat'}
-                  size={18}
-                  color={colors.primary}
-                />
-                <Text style={styles.modalInfoText}>
-                  {petpal.pet_type === 'dog' ? 'Perros' : 'Gatos'}
-                </Text>
-              </View>
-              <View style={styles.modalInfoRow}>
-                <Icon name="ruler" size={18} color={colors.primary} />
-                <Text style={styles.modalInfoText}>
-                  {translateSize(petpal.size_accepted)}
-                </Text>
-              </View>
-            </View>
 
-            <View style={styles.modalButtonsRow}>
-              <TouchableOpacity
-                style={[commonStyles.button, styles.modalButton]}
-                onPress={() => {
-                  setModalVisible(false);
-                  onPressProfile(petpal.id);
-                }}
-              >
-                <Text style={commonStyles.buttonText}>Ver perfil</Text>
-              </TouchableOpacity>
+                <View style={styles.infoCenter}>
+                  <Icon
+                    name={petpal.pet_type === 'dog' ? 'dog' : 'cat'}
+                    size={54}
+                    color={colors.primary}
+                  />
+                </View>
 
-              <TouchableOpacity
-                style={[commonStyles.button, styles.modalButton, { backgroundColor: colors.primary }]}
-                onPress={() => setShowPicker(true)}
-              >
-                <Text style={commonStyles.buttonText}>Solicitar reserva</Text>
-              </TouchableOpacity>
-            </View>
+                <View style={styles.modalInfoBlock}>
+                  <View style={styles.modalInfoRow}>
+                    <Icon name="star" size={18} color="#FFD700" />
+                    <Text style={styles.modalInfoText}>
+                      {petpal.experience || 'Sin experiencia especificada'}
+                    </Text>
+                  </View>
+                  <View style={styles.modalInfoRow}>
+                    <Icon name="cash" size={18} color={colors.primary} />
+                    <Text style={styles.modalInfoText}>
+                      {petpal.price_per_hour
+                        ? `$${petpal.price_per_hour}/h`
+                        : petpal.price_per_day
+                          ? `$${petpal.price_per_day}/día`
+                          : 'Precio no especificado'}
+                    </Text>
+                  </View>
+                  <View style={styles.modalInfoRow}>
+                    <Icon
+                      name={petpal.pet_type === 'dog' ? 'dog' : 'cat'}
+                      size={18}
+                      color={colors.primary}
+                    />
+                    <Text style={styles.modalInfoText}>
+                      {petpal.pet_type === 'dog' ? 'Perros' : 'Gatos'}
+                    </Text>
+                  </View>
+                  <View style={styles.modalInfoRow}>
+                    <Icon name="ruler" size={18} color={colors.primary} />
+                    <Text style={styles.modalInfoText}>
+                      {translateSize(petpal.size_accepted)}
+                    </Text>
+                  </View>
+                </View>
 
-            {showPicker && (
-              <>
-                <DateTimePicker
-                  value={reservationDate}
-                  mode="date"
-                  onChange={handleChangeDate}
-                  minimumDate={new Date()}
-                />
-                <TouchableOpacity
-                  style={[commonStyles.button, styles.acceptButton]}
-                  onPress={() => {
-                    setShowPicker(false);
-                    setModalVisible(false);
-                    onRequest(petpal.id, reservationDate);  // ahora sí existe
-                  }}
-                >
-                  <Text style={commonStyles.buttonText}>Aceptar fecha</Text>
-                </TouchableOpacity>
-              </>
-            )}
+                <View style={{ width: '100%' }}>
+                  <TouchableOpacity
+                    style={[commonStyles.button, styles.fullWidthButton]}
+                    onPress={() => {
+                      setModalVisible(false);
+                      onPressProfile(petpal.id);
+                    }}
+                  >
+                    <Text style={commonStyles.buttonText}>Ver perfil</Text>
+                  </TouchableOpacity>
 
-            <View style={[styles.modalButtonsRow, { marginTop: 12 }]}>
-              <TouchableOpacity
-                style={[commonStyles.button, styles.modalButton, { backgroundColor: '#e53935' }]}
-                onPress={() => setModalVisible(false)}
-              >
-                <Text style={commonStyles.buttonText}>Cerrar</Text>
-              </TouchableOpacity>
-            </View>
+                  <TouchableOpacity
+                    style={[
+                      commonStyles.button,
+                      styles.fullWidthButton,
+                      { backgroundColor: colors.primary },
+                    ]}
+                    onPress={() => setShowPicker(true)}
+                  >
+                    <Text style={commonStyles.buttonText}>Solicitar reserva</Text>
+                  </TouchableOpacity>
+
+                  {showPicker && (
+                    <View style={styles.pickerContainer}>
+                      <DateTimePicker
+                        value={reservationDate}
+                        mode="date"
+                        onChange={handleChangeDate}
+                        minimumDate={new Date()}
+                      />
+                      <TouchableOpacity
+                        style={[commonStyles.button, styles.fullWidthButton, { backgroundColor: colors.primary }]}
+                        onPress={() => {
+                          setShowPicker(false);
+                          onRequest(petpal.id, reservationDate);
+                        }}
+                      >
+                        <Text style={commonStyles.buttonText}>Aceptar fecha</Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+
+                  <TouchableOpacity
+                    style={[
+                      commonStyles.button,
+                      styles.fullWidthButton,
+                      { backgroundColor: '#e53935' },
+                    ]}
+                    onPress={() => setModalVisible(false)}
+                  >
+                    <Text style={commonStyles.buttonText}>Cerrar</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </TouchableWithoutFeedback>
           </View>
-        </View>
+        </TouchableWithoutFeedback>
       </Modal>
     </>
   );
@@ -247,16 +257,18 @@ const styles = StyleSheet.create({
     padding: 24,
     width: '85%',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   infoCenter: {
     alignItems: 'center',
     marginVertical: 16,
   },
-  modalInfoBlock: {
-    width: '100%',
-    marginBottom: 10,
-    marginTop: 4,
-  },
+ modalInfoBlock: {
+  width: '100%',
+  marginBottom: 10,
+  marginTop: 4,
+  marginRight: 17,
+},
   modalInfoRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -267,23 +279,17 @@ const styles = StyleSheet.create({
     color: '#219653',
     fontSize: 15,
     marginLeft: 8,
-  },
-  modalButtonsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    gap: 12,
-    marginTop: 8,
-  },
-  modalButton: {
     flex: 1,
-    minWidth: 120,
-    maxWidth: 180,
+    textAlign: 'left',
   },
-  acceptButton: {
-    marginTop: 12,
-    backgroundColor: colors.primary,
-    alignSelf: 'stretch',
+  fullWidthButton: {
+    width: '100%',
+    marginTop: 10,
+  },
+  pickerContainer: {
+    marginTop: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
 
