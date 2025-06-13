@@ -15,3 +15,9 @@ Calificación y reseñas de servicios.
 npm install react react-native @react-navigation/native-stack react-native-vector-icons
 npm install --save-dev @types/react @types/react-native
 npm install expo
+
+Para correr la app:
+1. Tener instalada la aplicacion "Expo Go"
+2. usar comando en terminal:
+npx expo start
+3. Escanear QR
