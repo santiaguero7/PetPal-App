@@ -85,3 +85,14 @@ export const updatePetpalById = async (id: number, data: any) => {
   });
   return response.data;
 };
+
+export const getPetpalById = async (id: number) => {
+  const token = await getToken();
+  if (!token) throw new Error('Token no disponible');
+
+  // La API devuelve el PetPal directamente en resp.data
+  const resp = await api.get(`/petpals/${id}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return resp.data;     // <— aquí antes tenías resp.data.data
+};

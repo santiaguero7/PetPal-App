@@ -7,6 +7,7 @@ import {
   ScrollView,
   ActivityIndicator,
   RefreshControl,
+  Alert,
   StyleSheet
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -16,6 +17,10 @@ import ScreenHeader from '../components/ScreenHeader';
 import PetPalCard from '../components/PetPalCard';
 import { getMyPets } from '../services/pets';
 import { searchPetpalsByMascota } from '../services/petpals';
+import { getToken } from '../storage/token';
+import { jwtDecode } from 'jwt-decode';
+
+const API_URL = 'https://petpal-backend-production.up.railway.app/api';
 
 type Pet = {
   id: number;
@@ -69,6 +74,47 @@ export default function SearchScreen({ navigation }: any) {
       default: return 'Desconocido';
     }
   };
+    const requestService = async (petpalId: number, date: Date) => {
+    if (!selectedPetId) {
+      Alert.alert('Error', 'Debes seleccionar una mascota primero.');
+      return;
+    }
+    try {
+      const token = await getToken();
+      if (!token) throw new Error('No hay token disponible');
+      const decoded: any = jwtDecode(token);
+      const client_id = decoded.id;
+
+      // formatea sólo YYYY-MM-DD y hora fija (ej: a las 10am)
+      const dateOnly = date.toISOString().split('T')[0];
+      const date_start = `${dateOnly}T10:00:00`;
+      const date_end   = `${dateOnly}T11:00:00`;
+
+      const body = {
+        client_id,
+        petpal_id: petpalId,
+        pet_id: selectedPetId,
+        service_type: service === 'Paseo de perros' ? 'dog walker' : 'caregiver',
+        date_start,
+        date_end
+      };
+
+      const resp = await fetch(`${API_URL}/reservations/create`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(body),
+      });
+      if (!resp.ok) throw new Error('Error creando reserva');
+      Alert.alert('¡Listo!', 'Tu reserva ha sido solicitada y está pendiente.');
+    } catch (err: any) {
+      console.error(err);
+      Alert.alert('Error', err.message || 'No se pudo crear la reserva.');
+    }
+  };
+
 
 
 
@@ -206,6 +252,7 @@ export default function SearchScreen({ navigation }: any) {
               petpal={c}
               translateSize={translateSize}
               onPressProfile={(id) => navigation.navigate('Perfil', { caretakerId: id })}
+              onRequest={requestService}
             />
           ))
         )}

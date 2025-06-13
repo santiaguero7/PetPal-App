@@ -1,162 +1,174 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+// src/screens/ServicesScreen.tsx
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  ActivityIndicator,
+  RefreshControl,
+  Alert
+} from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { colors } from '../themes/colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { colors } from '../themes/colors';
 import { commonStyles } from '../themes/commonStyles';
 import ScreenHeader from '../components/ScreenHeader';
+import api from '../../api';              // tu instancia axios/fetch
+import { getToken } from '../storage/token';
+import {jwtDecode} from 'jwt-decode';
 
-const upcomingBookings = [
-  {
-    id: '1',
-    service: 'Paseo de perros',
-    caretaker: {
-      name: 'Sarah Johnson',
-      image: null,
-    },
-    date: '22 Mayo 2025',
-    time: '15:00 - 16:00',
-    location: 'Tu casa',
-    status: 'confirmed',
-  },
-];
-
-const pastBookings = [
-  {
-    id: '2',
-    service: 'Cuidado de mascotas',
-    caretaker: {
-      name: 'Michael Chen',
-      image: null,
-    },
-    date: '15 Mayo 2025',
-    time: '09:00 - 11:00',
-    location: 'Tu casa',
-    status: 'completed',
-  },
-  {
-    id: '3',
-    service: 'Paseo de perros',
-    caretaker: {
-      name: 'Emily Rodriguez',
-      image: null,
-    },
-    date: '10 Mayo 2025',
-    time: '16:30 - 17:30',
-    location: 'Parque local',
-    status: 'completed',
-  },
-];
-
-type Booking = {
-  id: string;
-  service: string;
-  caretaker: { name: string; image: string | null };
-  date: string;
-  time: string;
-  location: string;
-  status: string;
+type Reservation = {
+  id: number;
+  petpal_id: number;
+  pet_id: number;
+  date_start: string;
+  status: 'pending' | 'accepted' | 'completed' | 'rejected';
 };
 
 export default function ServicesScreen() {
   const [tab, setTab] = useState<'upcoming' | 'past'>('upcoming');
+  const [reservations, setReservations] = useState<Reservation[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const renderBookingCard = (booking: Booking) => (
-    <View key={booking.id} style={styles.card}>
-      <View style={[
-        styles.cardBar,
-        { backgroundColor: colors.primary }
-      ]} />
-      <View style={styles.cardContent}>
-        <View style={styles.cardHeader}>
-          <View style={styles.caretakerInfo}>
-            <View style={styles.avatar}>
-              <Icon name="account" size={28} color={colors.secondary} />
+  const loadReservations = async () => {
+    setLoading(true);
+    try {
+      const token = await getToken();
+      if (!token) throw new Error('No hay token');
+      const { id: client_id }: any = jwtDecode(token);
+      const resp = await api.get(`/reservations/client/${client_id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setReservations(resp.data.data);
+    } catch (e: any) {
+      console.error(e);
+      Alert.alert('Error', 'No se pudieron cargar tus reservas');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { loadReservations(); }, []);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadReservations();
+    setRefreshing(false);
+  };
+
+  const upcoming = reservations.filter(r => r.status === 'pending' || r.status === 'accepted');
+  const past     = reservations.filter(r => r.status === 'completed');
+
+  const renderCard = (r: Reservation) => {
+    const d = new Date(r.date_start);
+    const dateStr = d.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+    const timeStr = d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+    const statusLabel = r.status === 'pending'
+      ? 'Pendiente'
+      : r.status === 'accepted'
+      ? 'Confirmado'
+      : 'Completado';
+    const statusStyle = r.status === 'completed'
+      ? styles.statusCompleted
+      : styles.statusConfirmed;
+
+    return (
+      <View key={r.id} style={styles.card}>
+        <View style={[styles.cardBar, { backgroundColor: colors.primary }]} />
+        <View style={styles.cardContent}>
+          <View style={styles.cardHeader}>
+            <View style={styles.caretakerInfo}>
+              <View style={styles.avatar}>
+                <Icon name="account" size={28} color={colors.secondary} />
+              </View>
+              <View>
+                <Text style={styles.caretakerName}>PetPal #{r.petpal_id}</Text>
+                <Text style={styles.serviceName}>{r.status === 'completed' ? 'Servicio' : 'Reserva'}</Text>
+              </View>
             </View>
             <View>
-              <Text style={styles.caretakerName}>{booking.caretaker.name}</Text>
-              <Text style={styles.serviceName}>{booking.service}</Text>
+              <Text style={[styles.status, statusStyle]}>{statusLabel}</Text>
             </View>
           </View>
-          <View>
-            <Text style={[
-              styles.status,
-              booking.status === 'confirmed' ? styles.statusConfirmed : styles.statusCompleted
-            ]}>
-              {booking.status === 'confirmed' ? 'Confirmado' : 'Completado'}
-            </Text>
+          <View style={styles.infoRow}>
+            <Icon name="calendar" size={16} color={colors.secondary} style={{ marginRight: 6 }} />
+            <Text style={styles.infoText}>{dateStr}</Text>
+          </View>
+          <View style={styles.infoRow}>
+            <Icon name="clock-outline" size={16} color={colors.secondary} style={{ marginRight: 6 }} />
+            <Text style={styles.infoText}>{timeStr}</Text>
+          </View>
+          <View style={styles.actionsRow}>
+            {r.status === 'pending' || r.status === 'accepted' ? (
+              <>
+                <TouchableOpacity style={styles.actionBtnOutline}>
+                  <Text style={styles.actionBtnOutlineText}>Cancelar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.actionBtn}>
+                  <Text style={styles.actionBtnText}>Mensaje</Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <TouchableOpacity style={styles.actionBtn}>
+                <Text style={styles.actionBtnText}>Reservar de nuevo</Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
-        <View style={styles.infoRow}>
-          <Icon name="calendar" size={16} color={colors.secondary} style={{ marginRight: 6 }} />
-          <Text style={styles.infoText}>{booking.date}</Text>
-        </View>
-        <View style={styles.infoRow}>
-          <Icon name="clock-outline" size={16} color={colors.secondary} style={{ marginRight: 6 }} />
-          <Text style={styles.infoText}>{booking.time}</Text>
-        </View>
-        <View style={styles.infoRow}>
-          <Icon name="map-marker" size={16} color={colors.secondary} style={{ marginRight: 6 }} />
-          <Text style={styles.infoText}>{booking.location}</Text>
-        </View>
-        <View style={styles.actionsRow}>
-          {booking.status === 'confirmed' ? (
-            <>
-              <TouchableOpacity style={styles.actionBtnOutline}>
-                <Text style={styles.actionBtnOutlineText}>Cancelar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.actionBtn}>
-                <Text style={styles.actionBtnText}>Mensaje</Text>
-              </TouchableOpacity>
-            </>
-          ) : (
-            <TouchableOpacity style={styles.actionBtn}>
-              <Text style={styles.actionBtnText}>Reservar de nuevo</Text>
-            </TouchableOpacity>
-          )}
-        </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['top']}>
-      <ScrollView contentContainerStyle={{ padding: 18, backgroundColor: colors.background }}>
+      <ScrollView
+        contentContainerStyle={{ padding: 18 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      >
         <ScreenHeader title="Contrataciones" subtitle="Tus servicios reservados" />
+
+        {/* Tabs */}
         <View style={styles.tabsRow}>
           <TouchableOpacity
             style={[styles.tabBtn, tab === 'upcoming' && styles.tabBtnActive]}
             onPress={() => setTab('upcoming')}
           >
-            <Text style={[styles.tabBtnText, tab === 'upcoming' && styles.tabBtnTextActive]}>Próximas</Text>
+            <Text style={[styles.tabBtnText, tab === 'upcoming' && styles.tabBtnTextActive]}>
+              Próximas
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.tabBtn, tab === 'past' && styles.tabBtnActive]}
             onPress={() => setTab('past')}
           >
-            <Text style={[styles.tabBtnText, tab === 'past' && styles.tabBtnTextActive]}>Pasadas</Text>
+            <Text style={[styles.tabBtnText, tab === 'past' && styles.tabBtnTextActive]}>
+              Pasadas
+            </Text>
           </TouchableOpacity>
         </View>
+
+        {/* Listado */}
         <View style={{ marginTop: 18 }}>
-          {tab === 'upcoming' ? (
-            upcomingBookings.length > 0 ? (
-              upcomingBookings.map(renderBookingCard)
-            ) : (
-              <View style={styles.emptyBox}>
-                <Text style={styles.emptyText}>No tienes contrataciones próximas</Text>
+          {loading ? (
+            <ActivityIndicator size="large" color={colors.primary} />
+          ) : (tab === 'upcoming' ? upcoming : past).length === 0 ? (
+            <View style={styles.emptyBox}>
+              <Text style={styles.emptyText}>
+                {tab === 'upcoming'
+                  ? 'No tienes contrataciones próximas'
+                  : 'No tienes contrataciones pasadas'}
+              </Text>
+              {tab === 'upcoming' && (
                 <TouchableOpacity style={styles.actionBtn}>
                   <Text style={styles.actionBtnText}>Buscar cuidadores</Text>
                 </TouchableOpacity>
-              </View>
-            )
+              )}
+            </View>
           ) : (
-            pastBookings.length > 0 ? (
-              pastBookings.map(renderBookingCard)
-            ) : (
-              <View style={styles.emptyBox}>
-                <Text style={styles.emptyText}>No tienes contrataciones pasadas</Text>
-              </View>
-            )
+            (tab === 'upcoming' ? upcoming : past).map(renderCard)
           )}
         </View>
       </ScrollView>

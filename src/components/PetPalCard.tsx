@@ -1,17 +1,37 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Modal,
+  StyleSheet
+} from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { colors } from '../themes/colors';
 import { commonStyles } from '../themes/commonStyles';
 
 interface PetPalCardProps {
   petpal: any;
-  onPressProfile: (id: string) => void;
+  onPressProfile: (id: number) => void;
+  onRequest: (id: number, date: Date) => void;
   translateSize: (size: string) => string;
 }
 
-const PetPalCard: React.FC<PetPalCardProps> = ({ petpal, onPressProfile, translateSize }) => {
+const PetPalCard: React.FC<PetPalCardProps> = ({
+  petpal,
+  onPressProfile,
+  onRequest,
+  translateSize
+}) => {
   const [modalVisible, setModalVisible] = useState(false);
+  const [showPicker, setShowPicker] = useState(false);
+  const [reservationDate, setReservationDate] = useState(new Date());
+
+  const handleChangeDate = (_: any, date?: Date) => {
+    if (date) setReservationDate(date);
+    setShowPicker(false);
+  };
 
   return (
     <>
@@ -66,16 +86,20 @@ const PetPalCard: React.FC<PetPalCardProps> = ({ petpal, onPressProfile, transla
             <Text style={commonStyles.modalTitle}>
               {petpal.service_type === 'dog walker' ? 'Paseador' : 'Cuidador'} en {petpal.location}
             </Text>
-            <View style={{ alignItems: 'center', marginBottom: 16 }}>
-              <Icon name={petpal.pet_type === 'dog' ? 'dog' : 'cat'} size={54} color={colors.primary} />
+
+            <View style={styles.infoCenter}>
+              <Icon
+                name={petpal.pet_type === 'dog' ? 'dog' : 'cat'}
+                size={54}
+                color={colors.primary}
+              />
             </View>
-            <View style={[styles.modalInfoBlock, { alignItems: 'flex-start', width: '95%', alignSelf: 'flex-start' }]}>
+
+            <View style={styles.modalInfoBlock}>
               <View style={styles.modalInfoRow}>
                 <Icon name="star" size={18} color="#FFD700" />
                 <Text style={styles.modalInfoText}>
-                  {petpal.experience
-                    ? `${petpal.experience}`
-                    : 'Sin experiencia especificada'}
+                  {petpal.experience || 'Sin experiencia especificada'}
                 </Text>
               </View>
               <View style={styles.modalInfoRow}>
@@ -84,12 +108,16 @@ const PetPalCard: React.FC<PetPalCardProps> = ({ petpal, onPressProfile, transla
                   {petpal.price_per_hour
                     ? `$${petpal.price_per_hour}/h`
                     : petpal.price_per_day
-                    ? `$${petpal.price_per_day}/día`
-                    : 'Precio no especificado'}
+                      ? `$${petpal.price_per_day}/día`
+                      : 'Precio no especificado'}
                 </Text>
               </View>
               <View style={styles.modalInfoRow}>
-                <Icon name={petpal.pet_type === 'dog' ? 'dog' : 'cat'} size={18} color={colors.primary} />
+                <Icon
+                  name={petpal.pet_type === 'dog' ? 'dog' : 'cat'}
+                  size={18}
+                  color={colors.primary}
+                />
                 <Text style={styles.modalInfoText}>
                   {petpal.pet_type === 'dog' ? 'Perros' : 'Gatos'}
                 </Text>
@@ -101,6 +129,7 @@ const PetPalCard: React.FC<PetPalCardProps> = ({ petpal, onPressProfile, transla
                 </Text>
               </View>
             </View>
+
             <View style={styles.modalButtonsRow}>
               <TouchableOpacity
                 style={[commonStyles.button, styles.modalButton]}
@@ -111,6 +140,38 @@ const PetPalCard: React.FC<PetPalCardProps> = ({ petpal, onPressProfile, transla
               >
                 <Text style={commonStyles.buttonText}>Ver perfil</Text>
               </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[commonStyles.button, styles.modalButton, { backgroundColor: colors.primary }]}
+                onPress={() => setShowPicker(true)}
+              >
+                <Text style={commonStyles.buttonText}>Solicitar reserva</Text>
+              </TouchableOpacity>
+            </View>
+
+            {showPicker && (
+              <>
+                <DateTimePicker
+                  value={reservationDate}
+                  mode="date"
+                  display="calendar"
+                  onChange={handleChangeDate}
+                  minimumDate={new Date()}
+                />
+                <TouchableOpacity
+                  style={[commonStyles.button, styles.acceptButton]}
+                  onPress={() => {
+                    setShowPicker(false);
+                    setModalVisible(false);
+                    onRequest(petpal.id, reservationDate);
+                  }}
+                >
+                  <Text style={commonStyles.buttonText}>Aceptar fecha</Text>
+                </TouchableOpacity>
+              </>
+            )}
+
+            <View style={[styles.modalButtonsRow, { marginTop: 12 }]}>  
               <TouchableOpacity
                 style={[commonStyles.button, styles.modalButton, { backgroundColor: '#e53935' }]}
                 onPress={() => setModalVisible(false)}
@@ -153,7 +214,13 @@ const styles = StyleSheet.create({
     marginRight: 14,
     marginTop: 2,
   },
-  caretakerTagsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 2, marginBottom: 2 },
+  caretakerTagsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 2,
+    marginBottom: 2
+  },
   caretakerTag: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -164,7 +231,11 @@ const styles = StyleSheet.create({
     marginRight: 6,
     marginBottom: 4,
   },
-  caretakerTagText: { color: '#219653', fontSize: 13, marginLeft: 4 },
+  caretakerTagText: {
+    color: '#219653',
+    fontSize: 13,
+    marginLeft: 4
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.25)',
@@ -177,6 +248,10 @@ const styles = StyleSheet.create({
     padding: 24,
     width: '85%',
     alignItems: 'center',
+  },
+  infoCenter: {
+    alignItems: 'center',
+    marginVertical: 16,
   },
   modalInfoBlock: {
     width: '100%',
@@ -196,7 +271,7 @@ const styles = StyleSheet.create({
   },
   modalButtonsRow: {
     flexDirection: 'row',
-    justifyContent: 'flex-start',
+    justifyContent: 'space-between',
     width: '100%',
     gap: 12,
     marginTop: 8,
@@ -205,6 +280,11 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 120,
     maxWidth: 180,
+  },
+  acceptButton: {
+    marginTop: 8,
+    alignSelf: 'center',
+    width: '60%',
   },
 });
 
