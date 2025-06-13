@@ -27,27 +27,17 @@ export async function getPetPalReservations() {
   return json.data;
 };
 
+
 export async function updateReservationStatus(
   id: number,
   status: 'accepted' | 'rejected'
-): Promise<any> {
+): Promise<{ message: string }> {
   const token = await getToken();
-  const response = await fetch(
-    `https://petpal-backend-production.up.railway.app/api/reservations/petpal/${id}`,
-    {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ status }),
-    }
+  const { data } = await api.put(
+    `/reservations/${id}/status`,
+    { status },
+    { headers: { Authorization: `Bearer ${token}` } }
   );
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || 'Failed to update reservation status');
-  }
-
-  return response.json();
+  return data;
 }
+
