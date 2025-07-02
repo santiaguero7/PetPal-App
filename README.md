@@ -11,6 +11,9 @@ Contratación directa desde la app.
 Calificación y reseñas de servicios.
 
 
+Backend de PetPal
+https://github.com/santiaguero7/PetPal-Backend.git
+
 
 npm install react react-native @react-navigation/native-stack react-native-vector-icons
 npm install --save-dev @types/react @types/react-native
