@@ -1,305 +1,319 @@
-import React, { useRef, useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  Modal,
-  FlatList,
+import React, { useState, useEffect } from 'react';
+import { 
+  View, 
+  Text, 
+  TextInput, 
+  TouchableOpacity, 
+  StyleSheet, 
   Keyboard,
-  StyleSheet,
-  ScrollView,
+  ScrollView 
 } from 'react-native';
 import { colors } from '../themes/colors';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
-const serviceTypes = [
-  { label: 'Paseador', value: 'dog walker' },
-  { label: 'Cuidador', value: 'caregiver' },
-];
-
-const petTypes = [
-  { label: 'Perro', value: 'dog' },
-  { label: 'Gato', value: 'cat' },
-];
-
-const sizes = [
-  { label: 'Chico', value: 'small' },
-  { label: 'Mediano', value: 'medium' },
-  { label: 'Grande', value: 'large' },
-  { label: 'Todos', value: 'all' },
-];
-
-type Props = {
-  initialValues?: any;
-  onChange: (values: any) => void;
-  styles?: any;
+// --- INTERFACE CORREGIDA ---
+interface Props {
+  initialValues?: {
+    id?: number;
+    service_type?: 'dog walker' | 'caregiver';
+    price_per_hour?: number | null;
+    price_per_day?: number | null;
+    experience?: string;
+    location?: string;
+    pet_type?: 'dog' | 'cat';
+    size_accepted?: 'small' | 'medium' | 'large' | 'all';
+  };
+  onSubmit: (values: any) => void; // Parent expects this
   onCancel?: () => void;
-};
+  submitText?: string;
+  styles?: any; // Kept for compatibility
+}
 
-export default function PetPalPostForm({
-  initialValues = {},
-  onChange,
-  styles = defaultStyles,
-  onCancel,
+export default function PetPalPostForm({ 
+  initialValues, 
+  onSubmit, 
+  onCancel, 
+  submitText = "Guardar", 
 }: Props) {
-  const [service_type, setServiceType] = useState(initialValues.service_type || 'dog walker');
-  const [modalService, setModalService] = useState(false);
+  
+  // --- LOCAL STATE ---
+  const [formData, setFormData] = useState({
+    service_type: 'dog walker',
+    price: '', // Unified input for price
+    location: '',
+    experience: '',
+    pet_type: 'dog',
+    size_accepted: 'all',
+  });
 
-  const [price_per_hour, setPricePerHour] = useState(initialValues.price_per_hour?.toString() || '');
-  const [price_per_day, setPricePerDay] = useState(initialValues.price_per_day?.toString() || '');
-  const [experience, setExperience] = useState(initialValues.experience || '');
-  const [location, setLocation] = useState(initialValues.location || '');
-
-  const [pet_type, setPetType] = useState(initialValues.pet_type || 'dog');
-  const [modalPetType, setModalPetType] = useState(false);
-
-  const [size_accepted, setSizeAccepted] = useState(initialValues.size_accepted || 'medium');
-  const [modalSize, setModalSize] = useState(false);
-
-  const experienceRef = useRef<TextInput>(null);
-  const locationRef = useRef<TextInput>(null);
-  const priceHourRef = useRef<TextInput>(null);
-  const priceDayRef = useRef<TextInput>(null);
-
+  // --- LOAD INITIAL DATA ---
   useEffect(() => {
-    onChange({
-      service_type,
-      pet_type,
-      size_accepted,
-      experience,
-      location,
-      price_per_hour,
-      price_per_day,
-    });
-  }, [service_type, pet_type, size_accepted, experience, location, price_per_hour, price_per_day]);
+    if (initialValues) {
+      // Logic: If price_per_hour exists, use it. If not, try price_per_day.
+      const priceVal = initialValues.price_per_hour || initialValues.price_per_day || '';
+      
+      setFormData({
+        service_type: initialValues.service_type || 'dog walker',
+        price: priceVal.toString(),
+        location: initialValues.location || '',
+        experience: initialValues.experience || '',
+        pet_type: initialValues.pet_type || 'dog',
+        size_accepted: initialValues.size_accepted || 'all',
+      });
+    }
+  }, [initialValues]);
+
+  // --- SUBMIT HANDLER ---
+  const handleSubmit = () => {
+    Keyboard.dismiss();
+    const numericPrice = parseFloat(formData.price) || 0;
+
+    // We format the data exactly as the Backend expects it
+    const payload = {
+      ...formData,
+      // If Walker -> fill price_per_hour, null price_per_day
+      price_per_hour: formData.service_type === 'dog walker' ? numericPrice : null,
+      // If Caregiver -> fill price_per_day, null price_per_hour
+      price_per_day: formData.service_type === 'caregiver' ? numericPrice : null,
+    };
+
+    onSubmit(payload);
+  };
+
+  // --- RENDER HELPER FOR CHIPS ---
+  const renderChip = (label: string, value: string, currentValue: string, onSelect: (v: any) => void, icon?: string) => {
+    const isActive = currentValue === value;
+    return (
+      <TouchableOpacity 
+        style={[styles.chip, isActive && styles.chipActive]} 
+        onPress={() => onSelect(value)}
+        activeOpacity={0.7}
+      >
+        {icon && (
+          <Icon 
+            name={icon} 
+            size={18} 
+            color={isActive ? '#FFF' : colors.primary} 
+            style={{ marginRight: 6 }} 
+          />
+        )}
+        <Text style={[styles.chipText, isActive && styles.chipTextActive]}>{label}</Text>
+      </TouchableOpacity>
+    );
+  };
 
   return (
-    <ScrollView
-      contentContainerStyle={{ paddingBottom: 10 }}
-      keyboardShouldPersistTaps="handled"
-      showsVerticalScrollIndicator={false}
-    >
+    <View style={styles.container}>
+      
+      {/* 1. SERVICE TYPE */}
+      <Text style={styles.label}>¿Qué servicio ofreces?</Text>
+      <View style={styles.row}>
+        {renderChip('Paseador', 'dog walker', formData.service_type, (v) => setFormData({...formData, service_type: v}), 'dog-service')}
+        {renderChip('Cuidador', 'caregiver', formData.service_type, (v) => setFormData({...formData, service_type: v}), 'home-heart')}
+      </View>
+
+      {/* 2. LOCATION & PRICE */}
+      <View style={styles.rowInputs}>
+        <View style={{ flex: 2, marginRight: 12 }}>
+          <Text style={styles.label}>Ubicación (Barrio)</Text>
+          <View style={styles.inputContainer}>
+            <Icon name="map-marker-outline" size={20} color="#999" style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              value={formData.location}
+              onChangeText={(t) => setFormData({...formData, location: t})}
+              placeholder="Ej: Centro"
+              placeholderTextColor="#CCC"
+            />
+          </View>
+        </View>
+        
+        <View style={{ flex: 1 }}>
+          <Text style={styles.label}>
+             {formData.service_type === 'dog walker' ? 'Precio/Hora' : 'Precio/Día'}
+          </Text>
+          <View style={styles.inputContainer}>
+            <Text style={styles.currencyPrefix}>$</Text>
+            <TextInput
+              style={styles.input}
+              value={formData.price}
+              onChangeText={(t) => setFormData({...formData, price: t})}
+              keyboardType="numeric"
+              placeholder="0"
+              placeholderTextColor="#CCC"
+            />
+          </View>
+        </View>
+      </View>
+
+      {/* 3. PET TYPE */}
+      <Text style={styles.label}>Mascotas aceptadas</Text>
+      <View style={styles.row}>
+         {renderChip('Perros', 'dog', formData.pet_type, (v) => setFormData({...formData, pet_type: v}), 'dog')}
+         {renderChip('Gatos', 'cat', formData.pet_type, (v) => setFormData({...formData, pet_type: v}), 'cat')}
+      </View>
+
+      {/* 4. SIZE */}
+      <Text style={styles.label}>Tamaño máximo</Text>
       <View>
-        {/* Tipo de servicio */}
-        <Text style={styles.label}>Tipo de servicio</Text>
-        <TouchableOpacity
-          style={[styles.input, { justifyContent: 'center' }]}
-          onPress={() => setModalService(true)}
-          activeOpacity={0.7}
-        >
-          <Text style={{ color: '#22223B' }}>
-            {serviceTypes.find((t) => t.value === service_type)?.label || 'Seleccionar'}
-          </Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollChips}>
+           {renderChip('Chico', 'small', formData.size_accepted, (v) => setFormData({...formData, size_accepted: v}))}
+           {renderChip('Mediano', 'medium', formData.size_accepted, (v) => setFormData({...formData, size_accepted: v}))}
+           {renderChip('Grande', 'large', formData.size_accepted, (v) => setFormData({...formData, size_accepted: v}))}
+           {renderChip('Todos', 'all', formData.size_accepted, (v) => setFormData({...formData, size_accepted: v}))}
+        </ScrollView>
+      </View>
+
+      {/* 5. EXPERIENCE */}
+      <Text style={styles.label}>Experiencia / Descripción</Text>
+      <View style={[styles.inputContainer, styles.textAreaContainer]}>
+        <TextInput
+          style={[styles.input, styles.textArea]}
+          value={formData.experience}
+          onChangeText={(t) => setFormData({...formData, experience: t})}
+          placeholder="Cuéntanos sobre tu experiencia cuidando mascotas..."
+          placeholderTextColor="#CCC"
+          multiline
+          numberOfLines={3}
+          textAlignVertical="top"
+        />
+      </View>
+
+      {/* FOOTER ACTIONS */}
+      <View style={styles.footer}>
+        <TouchableOpacity style={styles.btnPrimary} onPress={handleSubmit}>
+          <Text style={styles.btnTextWhite}>{submitText}</Text>
         </TouchableOpacity>
-        <Modal visible={modalService} transparent animationType="fade">
-          <TouchableOpacity
-            style={{ flex: 1, backgroundColor: '#0008', justifyContent: 'center', alignItems: 'center' }}
-            activeOpacity={1}
-            onPressOut={() => setModalService(false)}
-          >
-            <View style={modalStyles.modalBox}>
-              <View style={modalStyles.modalBar} />
-              {serviceTypes.map((item) => (
-                <TouchableOpacity key={item.value} onPress={() => { setServiceType(item.value); setModalService(false); }}>
-                  <Text style={modalStyles.modalOption}>{item.label}</Text>
-                </TouchableOpacity>
-              ))}
-              <TouchableOpacity onPress={() => setModalService(false)}>
-                <Text style={modalStyles.modalCancel}>Cancelar</Text>
-              </TouchableOpacity>
-            </View>
-          </TouchableOpacity>
-        </Modal>
-
-        {/* Tipo de mascota */}
-        <Text style={styles.label}>Tipo de mascota</Text>
-        <TouchableOpacity
-          style={[styles.input, { justifyContent: 'center' }]}
-          onPress={() => setModalPetType(true)}
-          activeOpacity={0.7}
-        >
-          <Text style={{ color: '#22223B' }}>
-            {petTypes.find((t) => t.value === pet_type)?.label || 'Seleccionar'}
-          </Text>
-        </TouchableOpacity>
-        <Modal visible={modalPetType} transparent animationType="fade">
-          <TouchableOpacity
-            style={{ flex: 1, backgroundColor: '#0008', justifyContent: 'center', alignItems: 'center' }}
-            activeOpacity={1}
-            onPressOut={() => setModalPetType(false)}
-          >
-            <View style={modalStyles.modalBox}>
-              <View style={modalStyles.modalBar} />
-              {petTypes.map((item) => (
-                <TouchableOpacity key={item.value} onPress={() => { setPetType(item.value as 'dog' | 'cat'); setModalPetType(false); }}>
-                  <Text style={modalStyles.modalOption}>{item.label}</Text>
-                </TouchableOpacity>
-              ))}
-              <TouchableOpacity onPress={() => setModalPetType(false)}>
-                <Text style={modalStyles.modalCancel}>Cancelar</Text>
-              </TouchableOpacity>
-            </View>
-          </TouchableOpacity>
-        </Modal>
-
-        {/* Tamaño aceptado */}
-        <Text style={styles.label}>Tamaño aceptado</Text>
-        <TouchableOpacity
-          style={[styles.input, { justifyContent: 'center' }]}
-          onPress={() => setModalSize(true)}
-          activeOpacity={0.7}
-        >
-          <Text style={{ color: '#22223B' }}>
-            {sizes.find((s) => s.value === size_accepted)?.label || 'Seleccionar'}
-          </Text>
-        </TouchableOpacity>
-        <Modal visible={modalSize} transparent animationType="fade">
-          <TouchableOpacity
-            style={{ flex: 1, backgroundColor: '#0008', justifyContent: 'center', alignItems: 'center' }}
-            activeOpacity={1}
-            onPressOut={() => setModalSize(false)}
-          >
-            <View style={modalStyles.modalBox}>
-              <View style={modalStyles.modalBar} />
-              <FlatList
-                data={sizes}
-                keyExtractor={(item) => item.value}
-                style={{ alignSelf: 'stretch' }}
-                renderItem={({ item }) => (
-                  <TouchableOpacity onPress={() => { setSizeAccepted(item.value); setModalSize(false); }}>
-                    <Text style={modalStyles.modalOption}>{item.label}</Text>
-                  </TouchableOpacity>
-                )}
-                showsVerticalScrollIndicator
-              />
-              <TouchableOpacity onPress={() => setModalSize(false)}>
-                <Text style={modalStyles.modalCancel}>Cancelar</Text>
-              </TouchableOpacity>
-            </View>
-          </TouchableOpacity>
-        </Modal>
-
-        {/* Experiencia */}
-        <Text style={styles.label}>Experiencia</Text>
-        <TextInput
-          ref={experienceRef}
-          style={styles.input}
-          value={experience}
-          onChangeText={setExperience}
-          placeholder="Ej: 2 años paseando perros grandes y medianos"
-          returnKeyType="next"
-          onSubmitEditing={() => locationRef.current?.focus()}
-          blurOnSubmit={false}
-        />
-
-        {/* Zona */}
-        <Text style={styles.label}>Zona</Text>
-        <TextInput
-          ref={locationRef}
-          style={styles.input}
-          value={location}
-          onChangeText={setLocation}
-          placeholder="Ej: Nueva Córdoba"
-          returnKeyType="next"
-          onSubmitEditing={() => priceHourRef.current?.focus()}
-          blurOnSubmit={false}
-        />
-
-        {/* Precio por hora */}
-        <Text style={styles.label}>Precio por hora</Text>
-        <TextInput
-          ref={priceHourRef}
-          style={styles.input}
-          value={price_per_hour}
-          onChangeText={setPricePerHour}
-          keyboardType="numeric"
-          placeholder="Ej: 15"
-          returnKeyType="next"
-          onSubmitEditing={() => priceDayRef.current?.focus()}
-          blurOnSubmit={false}
-        />
-
-        {/* Precio por día */}
-        <Text style={styles.label}>Precio por día</Text>
-        <TextInput
-          ref={priceDayRef}
-          style={styles.input}
-          value={price_per_day}
-          onChangeText={setPricePerDay}
-          keyboardType="numeric"
-          placeholder="Ej: 100"
-          returnKeyType="done"
-          onSubmitEditing={() => Keyboard.dismiss()}
-          blurOnSubmit={true}
-        />
-
-        {/* Si querés mostrar botón "Cancelar" */}
+        
         {onCancel && (
-          <TouchableOpacity
-            style={[
-              styles.button,
-              { backgroundColor: colors.secondary, marginTop: 0, marginBottom: 0 },
-            ]}
-            onPress={onCancel}
-          >
-            <Text style={[styles.buttonText, { color: '#fff' }]}>Cancelar</Text>
+          <TouchableOpacity style={styles.btnSecondary} onPress={onCancel}>
+            <Text style={styles.btnTextSecondary}>Cancelar</Text>
           </TouchableOpacity>
         )}
       </View>
-    </ScrollView>
+
+    </View>
   );
 }
 
-const defaultStyles = StyleSheet.create({
-  label: { fontWeight: 'bold', marginTop: 16, marginBottom: 4, color: '#22223B' },
-  input: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 8,
-    fontSize: 16,
-    color: '#22223B',
-    borderWidth: 1,
-    borderColor: '#6FCF97',
+const styles = StyleSheet.create({
+  container: {
+    paddingVertical: 10,
   },
-  button: {
-    backgroundColor: '#6FCF97',
-    borderRadius: 20,
-    paddingVertical: 14,
-    alignItems: 'center',
+  label: {
+    fontSize: 14,
+    color: '#555',
+    fontWeight: '700',
+    marginBottom: 8,
     marginTop: 16,
-    marginBottom: 8,
   },
-  buttonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
-});
-
-const modalStyles = StyleSheet.create({
-  modalBox: {
-    backgroundColor: '#fff',
-    borderRadius: 14,
-    padding: 20,
-    width: 250,
-    maxHeight: 350,
-    borderWidth: 2,
-    borderColor: '#219653',
+  row: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  rowInputs: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  scrollChips: {
+    paddingRight: 20,
+    gap: 8,
+  },
+  
+  // Chips (Botones de selección)
+  chip: {
+    flexDirection: 'row',
     alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    backgroundColor: '#FFF',
+    minWidth: 80,
+    justifyContent: 'center',
   },
-  modalBar: {
-    width: 40,
-    height: 5,
-    backgroundColor: '#219653',
-    borderRadius: 3,
-    marginBottom: 16,
-    opacity: 0.5,
+  chipActive: {
+    backgroundColor: colors.primary, // Verde PetPal
+    borderColor: colors.primary,
   },
-  modalOption: {
-    fontSize: 18,
-    padding: 10,
-    textAlign: 'center',
+  chipText: {
+    color: '#555',
+    fontWeight: '600',
+    fontSize: 14,
   },
-  modalCancel: {
-    color: '#219653',
-    textAlign: 'right',
-    marginTop: 10,
+  chipTextActive: {
+    color: '#FFF',
+    fontWeight: 'bold',
+  },
+
+  // Inputs
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FAFAFA',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    height: 50,
+  },
+  input: {
+    flex: 1,
+    fontSize: 16,
+    color: '#333',
+    height: '100%',
+  },
+  inputIcon: {
+    marginRight: 8,
+  },
+  currencyPrefix: {
+    fontSize: 16,
+    color: '#333',
+    fontWeight: 'bold',
+    marginRight: 4,
+  },
+  textAreaContainer: {
+    height: 100,
+    paddingVertical: 10,
+  },
+  textArea: {
+    height: '100%',
+  },
+
+  // Footer Buttons
+  footer: {
+    marginTop: 30,
+    gap: 12,
+  },
+  btnPrimary: {
+    backgroundColor: colors.primary,
+    paddingVertical: 16,
+    borderRadius: 16,
+    alignItems: 'center',
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  btnSecondary: {
+    backgroundColor: '#FFF',
+    paddingVertical: 16,
+    borderRadius: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#DDD',
+  },
+  btnTextWhite: {
+    color: '#FFF',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  btnTextSecondary: {
+    color: '#666',
+    fontWeight: '600',
+    fontSize: 16,
   },
 });

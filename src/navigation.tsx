@@ -1,11 +1,14 @@
-// AppNavigator.tsx
+// src/navigation.tsx
 import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import { Platform, View } from 'react-native';
+import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-// SafeAreaView no es necesario aquí si solo usas insets
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+// CORRECCIÓN 1: Ruta relativa correcta (./ en lugar de ../)
+import { colors } from './themes/colors';
 
 // Import screens
 import LoginScreen from './screens/LoginScreen';
@@ -19,9 +22,10 @@ import PetPalHomeScreen from './screens/PetPalHomeScreen';
 import PetPalProfileScreen from './screens/PetPalProfileScreen';
 import PetPalRequestScreen from './screens/PetPalRequestsScreen'; 
 import AddPubScreen from './screens/AddPubScreen'; 
-import EditProfileScreen from './screens/EditProfileScreen'; // Nueva importación
+import EditProfileScreen from './screens/EditProfileScreen';
 
-// Tipo para el stack principal
+// --- DEFINICIÓN DE TIPOS ---
+
 export type RootStackParamList = {
   Login: undefined;
   Register: undefined;
@@ -29,72 +33,106 @@ export type RootStackParamList = {
   PetPalHome: undefined;
   AddPet: undefined; 
   AddPub: undefined; 
-  EditProfile: undefined; // Nuevo tipo para la pantalla de edición de perfil
+  EditProfile: undefined;
 };
 
-// Tipos para los tabs de usuario general
 export type MainTabParamList = {
   Inicio: undefined;
-  Buscar: undefined;
+  Buscar: { id?: string };
   Servicios: undefined;
   Perfil: undefined;
 };
 
-// Tipos para los tabs de PetPal
 export type PetPalTabParamList = {
-  InicioPetPal: undefined; // Renombrado para evitar colisión si se usara un solo TabParamList
+  InicioPetPal: undefined;
   Solicitudes: undefined;
-  PerfilPetPal: undefined; // Renombrado para evitar colisión
+  PerfilPetPal: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const MainAppTab = createBottomTabNavigator<MainTabParamList>();
 const PetPalAppTab = createBottomTabNavigator<PetPalTabParamList>();
 
-function MainTabs() {
-  const insets = useSafeAreaInsets();
+// --- TEMA DE NAVEGACIÓN ---
+const MyTheme = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    background: '#FAFAFA',
+    primary: colors.primary,
+  },
+};
 
+// --- COMPONENTES DE TABS ---
+
+function MainTabs() {
   return (
     <MainAppTab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#6FCF97',
-        tabBarInactiveTintColor: '#BDBDBD',
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: '#A0A0A0',
+        tabBarShowLabel: true,
         tabBarStyle: {
-          backgroundColor: '#E8F6EF',
+          backgroundColor: '#FFFFFF',
           borderTopWidth: 0,
-          height: 50 + insets.bottom,
-          paddingBottom: insets.bottom,
+          height: Platform.OS === 'ios' ? 85 : 65,
+          paddingBottom: Platform.OS === 'ios' ? 25 : 10,
+          paddingTop: 10,
+          borderTopLeftRadius: 20,
+          borderTopRightRadius: 20,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -4 },
+          shadowOpacity: 0.05,
+          shadowRadius: 10,
+          elevation: 10,
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
         },
-        tabBarLabelStyle: { fontSize: 13, marginBottom: 6 },
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '600',
+          marginTop: -2,
+        },
       }}
     >
+      {/* CORRECCIÓN 2: Usamos 'as any' para evitar conflictos de tipos estrictos */}
       <MainAppTab.Screen
         name="Inicio"
-        component={HomeScreen}
+        component={HomeScreen as any}
         options={{
-          tabBarIcon: ({ color }) => <Icon name="home" color={color} size={28} />,
+          tabBarIcon: ({ color, focused }) => (
+            <Icon name={focused ? "home" : "home-outline"} color={color} size={28} />
+          ),
         }}
       />
       <MainAppTab.Screen
         name="Buscar"
-        component={SearchScreen}
+        component={SearchScreen as any}
         options={{
-          tabBarIcon: ({ color }) => <Icon name="magnify" color={color} size={28} />,
+          tabBarIcon: ({ color, focused }) => (
+            <Icon name={focused ? "magnify" : "magnify"} color={color} size={28} />
+          ),
         }}
       />
       <MainAppTab.Screen
         name="Servicios"
-        component={ServicesScreen}
+        component={ServicesScreen as any}
         options={{
-          tabBarIcon: ({ color }) => <Icon name="clipboard-list" color={color} size={28} />,
+          tabBarIcon: ({ color, focused }) => (
+            <Icon name={focused ? "paw" : "paw-outline"} color={color} size={28} />
+          ),
         }}
       />
       <MainAppTab.Screen
         name="Perfil"
-        component={ProfileScreen}
+        component={ProfileScreen as any}
         options={{
-          tabBarIcon: ({ color }) => <Icon name="account" color={color} size={28} />,
+          tabBarIcon: ({ color, focused }) => (
+            <Icon name={focused ? "account" : "account-outline"} color={color} size={28} />
+          ),
         }}
       />
     </MainAppTab.Navigator>
@@ -102,60 +140,100 @@ function MainTabs() {
 }
 
 function PetPalTabs() {
-  const insets = useSafeAreaInsets();
-
   return (
     <PetPalAppTab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#6FCF97',
-        tabBarInactiveTintColor: '#BDBDBD',
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: '#A0A0A0',
+        tabBarShowLabel: true,
         tabBarStyle: {
-          backgroundColor: '#E8F6EF',
+          backgroundColor: '#FFFFFF',
           borderTopWidth: 0,
-          height: 50 + insets.bottom,
-          paddingBottom: insets.bottom,
+          height: Platform.OS === 'ios' ? 85 : 65,
+          paddingBottom: Platform.OS === 'ios' ? 25 : 10,
+          paddingTop: 10,
+          borderTopLeftRadius: 20,
+          borderTopRightRadius: 20,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -4 },
+          shadowOpacity: 0.05,
+          shadowRadius: 10,
+          elevation: 10,
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
         },
-        tabBarLabelStyle: { fontSize: 13, marginBottom: 6 },
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '600',
+          marginTop: -2,
+        },
       }}
     >
-      {/* Es común que la pantalla "Inicio" de PetPal sea diferente */}
       <PetPalAppTab.Screen
-        name="InicioPetPal" // Usando el nombre de PetPalTabParamList
-        component={PetPalHomeScreen}
+        name="InicioPetPal"
+        component={PetPalHomeScreen as any}
         options={{
-          title: 'Inicio', // Título que se muestra en el tab
-          tabBarIcon: ({ color }) => <Icon name="home-assistant" color={color} size={28} />, // Icono diferente para distinguir?
+          title: 'Dashboard',
+          tabBarIcon: ({ color, focused }) => (
+            <Icon name={focused ? "view-dashboard" : "view-dashboard-outline"} color={color} size={28} />
+          ),
         }}
       />
       <PetPalAppTab.Screen
         name="Solicitudes"
-        component={PetPalRequestScreen}
+        component={PetPalRequestScreen as any}
         options={{
-          tabBarIcon: ({ color }) => <Icon name="bell-ring" color={color} size={28} />, // Icono para solicitudes
+          tabBarBadge: 3, 
+          tabBarBadgeStyle: { backgroundColor: '#E53935', fontSize: 10 },
+          tabBarIcon: ({ color, focused }) => (
+            <Icon name={focused ? "clipboard-text" : "clipboard-text-outline"} color={color} size={28} />
+          ),
         }}
       />
       <PetPalAppTab.Screen
-        name="PerfilPetPal" // Usando el nombre de PetPalTabParamList
-        component={PetPalProfileScreen}
+        name="PerfilPetPal"
+        component={PetPalProfileScreen as any}
         options={{
-          title: 'Perfil', // Título que se muestra en el tab
-          tabBarIcon: ({ color }) => <Icon name="account-tie" color={color} size={28} />, // Icono diferente para distinguir?
+          title: 'Mi Perfil',
+          tabBarIcon: ({ color, focused }) => (
+            <Icon name={focused ? "account-tie" : "account-tie-outline"} color={color} size={28} />
+          ),
         }}
       />
     </PetPalAppTab.Navigator>
   );
 }
 
+// --- NAVEGADOR PRINCIPAL (STACK) ---
+
 export default function AppNavigator() {
   return (
-    <NavigationContainer>
-      <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="Login" component={LoginScreen} />
+    <NavigationContainer theme={MyTheme}>
+      <Stack.Navigator 
+        initialRouteName="Login" 
+        screenOptions={{ 
+          headerShown: false,
+          animation: 'slide_from_right', 
+          contentStyle: { backgroundColor: '#FAFAFA' }
+        }}
+      >
+        {/* Auth Flows */}
+        <Stack.Screen name="Login" component={LoginScreen} options={{ animation: 'fade' }} />
         <Stack.Screen name="Register" component={RegisterScreen} />
-        <Stack.Screen name="Home" component={MainTabs} />
-        <Stack.Screen name="PetPalHome" component={PetPalTabs} />
-        <Stack.Screen name="AddPet" component={AddPetScreen} />
+
+        {/* Main Flows */}
+        <Stack.Screen name="Home" component={MainTabs} options={{ animation: 'fade' }} />
+        <Stack.Screen name="PetPalHome" component={PetPalTabs} options={{ animation: 'fade' }} />
+
+        {/* Sub Screens */}
+        <Stack.Screen 
+          name="AddPet" 
+          component={AddPetScreen} 
+          options={{ presentation: 'modal' }} 
+        />
         <Stack.Screen name="AddPub" component={AddPubScreen} />
         <Stack.Screen name="EditProfile" component={EditProfileScreen} /> 
       </Stack.Navigator>

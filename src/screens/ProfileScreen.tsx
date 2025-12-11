@@ -1,11 +1,23 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Modal, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
+  Modal,
+  TouchableWithoutFeedback,
+  KeyboardAvoidingView,
+  Platform,
+  Image,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { commonStyles } from '../themes/commonStyles';
 import { colors } from '../themes/colors';
-import type { StackNavigationProp } from '@react-navigation/stack';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
+import type { StackNavigationProp } from '@react-navigation/stack';
 import type { RootStackParamList, MainTabParamList } from '../navigation';
 import PetCard from '../components/PetCard';
 import PetForm from '../components/PetForm';
@@ -17,26 +29,27 @@ import { getMyPets, updatePetById, deletePetById } from '../services/pets';
 import { RefreshControl } from 'react-native';
 import UserCard from '../components/UserCard';
 
-
 const menuItems = [
-  { icon: 'account-cog', label: 'Configuración de cuenta' },
-  { icon: 'credit-card', label: 'Métodos de pago' },
-  { icon: 'heart', label: 'Favoritos' },
-  { icon: 'help-circle', label: 'Centro de ayuda' },
-  { icon: 'cog', label: 'Preferencias' },
+  { icon: 'account-cog-outline', label: 'Configuración de cuenta', action: 'AccountSettings' },
+  { icon: 'credit-card-outline', label: 'Métodos de pago', action: 'PaymentMethods' },
+  { icon: 'heart-outline', label: 'Favoritos', action: 'Favorites' },
+  { icon: 'help-circle-outline', label: 'Centro de ayuda', action: 'HelpCenter' },
+  { icon: 'cog-outline', label: 'Preferencias', action: 'Preferences' },
 ];
 
-type ProfileScreenNavigationProp = BottomTabScreenProps<MainTabParamList, 'Perfil'> & {
-  navigation: BottomTabScreenProps<MainTabParamList, 'Perfil'>['navigation'] &
-  StackNavigationProp<RootStackParamList>;
+type ProfileScreenProps = BottomTabScreenProps<MainTabParamList, 'Perfil'> & {
+  navigation: StackNavigationProp<RootStackParamList>;
 };
-type Props = ProfileScreenNavigationProp;
 
-export default function ProfileScreen({ navigation }: Props) {
+export default function ProfileScreen({ navigation }: ProfileScreenProps) {
+  // Estados de datos
   const [user, setUser] = useState<any>(null);
   const [pets, setPets] = useState<any[]>([]);
-  const [selectedPet, setSelectedPet] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+
+  // Estados de edición/modal mascotas
+  const [selectedPet, setSelectedPet] = useState<any>(null);
   const [editMode, setEditMode] = useState(false);
   const [editValues, setEditValues] = useState<any>({
     name: '',
@@ -46,85 +59,79 @@ export default function ProfileScreen({ navigation }: Props) {
     pet_type: 'dog',
     description: '',
   });
+
+  // Estado modal usuario
   const [showUserModal, setShowUserModal] = useState(false);
 
-  const fetchUser = async () => {
+  // --- CARGA DE DATOS ---
+  const fetchData = async () => {
     try {
       const token = await getToken();
       if (!token) return;
       const decoded: any = jwtDecode(token);
-      const userData = await getUserById(decoded.id);
+      
+      // Fetch User & Pets en paralelo
+      const [userData, petsData] = await Promise.all([
+        getUserById(decoded.id),
+        getMyPets()
+      ]);
+
       setUser(userData);
+      setPets(petsData);
     } catch (error) {
-      console.error('Error cargando usuario:', error);
+      console.error('Error cargando perfil:', error);
     }
   };
 
   useEffect(() => {
-    fetchUser();
+    fetchData();
   }, []);
-  const loadPets = async () => {
-    try {
-      const data = await getMyPets();
-      setPets(data);
-    } catch (error) {
-      console.error('Error trayendo mascotas del usuario:', error);
-    }
-  };
 
+  // Recargar al volver a la pantalla (focus)
   useEffect(() => {
-    loadPets();
-  }, []);
+    const unsubscribe = navigation.addListener('focus', fetchData);
+    return unsubscribe;
+  }, [navigation]);
+
   const onRefresh = async () => {
     setRefreshing(true);
-    await loadPets();
+    await fetchData();
     setRefreshing(false);
   };
 
-
-
-  useEffect(() => {
-    const fetchPets = async () => {
-      try {
-        const data = await getMyPets();
-        setPets(data);
-      } catch (error) {
-        console.error('Error trayendo mascotas del usuario:', error);
-      }
-    };
-    fetchPets();
-  }, []);
+  // --- ACCIONES ---
 
   const handleLogout = () => {
-    Alert.alert('Cerrar sesión', '¿Seguro que quieres cerrar sesión?', [
+    Alert.alert('Cerrar sesión', '¿Seguro que quieres salir de PetPal?', [
       { text: 'Cancelar', style: 'cancel' },
       {
-        text: 'Cerrar sesión',
+        text: 'Salir',
         style: 'destructive',
         onPress: async () => {
-          await removeToken?.();
+          await removeToken();
           navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
         },
       },
     ]);
   };
 
+  // Lógica Mascotas
   const handleEditPet = async () => {
     if (!selectedPet) return;
     try {
       await updatePetById(selectedPet.id, editValues);
-      const updatedPets = await getMyPets();
-      setPets(updatedPets);
       setEditMode(false);
       setSelectedPet(null);
+      fetchData(); // Recargar lista
+      Alert.alert('Éxito', 'Mascota actualizada correctamente');
     } catch (error) {
-      console.error('Error actualizando mascota:', error);
+      Alert.alert('Error', 'No se pudo actualizar la mascota');
     }
   };
 
   const handleDeletePet = async () => {
     if (!selectedPet) return;
-    Alert.alert('Eliminar mascota', '¿Seguro que quieres eliminar esta mascota?', [
+    Alert.alert('Eliminar mascota', `¿Estás seguro de eliminar a ${selectedPet.name}?`, [
       { text: 'Cancelar', style: 'cancel' },
       {
         text: 'Eliminar',
@@ -132,275 +139,479 @@ export default function ProfileScreen({ navigation }: Props) {
         onPress: async () => {
           try {
             await deletePetById(selectedPet.id);
-            const updatedPets = await getMyPets();
-            setPets(updatedPets);
             setEditMode(false);
             setSelectedPet(null);
+            fetchData();
           } catch (error) {
-            console.error('Error eliminando mascota:', error);
+            Alert.alert('Error', 'No se pudo eliminar la mascota');
           }
         },
       },
     ]);
   };
 
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', () => {
-      
-      fetchUser(); 
-    });
-    return unsubscribe;
-  }, [navigation]);
-
+  // --- RENDER ---
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['top']}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView
-        contentContainerStyle={{ padding: 18 }}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        showsVerticalScrollIndicator={false}
       >
+        <ScreenHeader title="Mi Perfil" subtitle="Gestiona tu cuenta y mascotas" icon="account-circle-outline" />
 
-        <ScreenHeader title="Mi Perfil" subtitle="Registra tus mascotas y tus datos" />
-
-        <View style={styles.profileCard}>
-          <View style={styles.profileHeader} />
-          <TouchableOpacity onPress={() => setShowUserModal(true)} activeOpacity={0.8}>
-            <View style={styles.avatarBox}>
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>{user?.name?.substring(0, 2).toUpperCase() || 'US'}</Text>
-              </View>
-            </View>
-            <View style={styles.profileInfo}>
-              <Text style={styles.profileName}>{user?.name}</Text>
-              <Text style={styles.profileEmail}>{user?.email}</Text>
-            </View>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Tus mascotas</Text>
-            <TouchableOpacity style={styles.addPetBtn} onPress={() => navigation.navigate('AddPet')}>
-              <Icon name="plus" size={18} color={colors.primary} />
-              <Text style={styles.addPetBtnText}>Agregar</Text>
-            </TouchableOpacity>
-          </View>
-
-          {pets.length === 0 ? (
-            <Text style={{ color: colors.text, marginBottom: 12 }}>No tienes mascotas registradas.</Text>
-          ) : (
-            pets.map((pet) => (
-              <TouchableOpacity
-                key={pet.id}
-                style={{ marginBottom: 12 }}
-                onPress={() => {
-                  setSelectedPet(pet);
-                  setEditMode(false);
-                  setEditValues(pet);
-                }}
-                activeOpacity={0.8}
-              >
-                <PetCard {...pet} />
-              </TouchableOpacity>
-            ))
-          )
-          }
-        </View>
-
-        <Modal
-          visible={!!selectedPet}
-          transparent
-          animationType="slide"
-          onRequestClose={() => {
-            setEditMode(false);
-            setSelectedPet(null);
-          }}
+        {/* 1. TARJETA DE PERFIL */}
+        <TouchableOpacity 
+          style={styles.profileCard} 
+          activeOpacity={0.9} 
+          onPress={() => setShowUserModal(true)}
         >
-          <TouchableWithoutFeedback
-            onPress={() => {
-              setEditMode(false);
-              setSelectedPet(null);
-            }}
-          >
-            <View style={styles.modalOverlay}>
-              <TouchableWithoutFeedback>
-                <View style={styles.modalFormContent}>
-                  {selectedPet && !editMode && (
-                    <>
-                      <PetCard
-                        {...selectedPet}
-                        showActions
-                        onEdit={() => setEditMode(true)}
-                        onDelete={handleDeletePet}
-                        onClose={() => {
-                          setEditMode(false);
-                          setSelectedPet(null);
-                        }}
-                      />
-                    </>
-                  )}
-                  {selectedPet && editMode && (
-                    <>
-                      <PetForm
-                        name={editValues.name}
-                        setNombre={(v: string) => setEditValues({ ...editValues, name: v })}
-                        pet_type={editValues.pet_type}
-                        setPetType={(v: 'dog' | 'cat') => setEditValues({ ...editValues, pet_type: v })}
-                        weight={editValues.weight}
-                        setPeso={(v: string) => setEditValues({ ...editValues, weight: parseFloat(v) || null })}
-                        breed={editValues.breed}
-                        setRaza={(v: string) => setEditValues({ ...editValues, breed: v })}
-                        age={editValues.age}
-                        setEdad={(v: string) => setEditValues({ ...editValues, age: parseInt(v) || 0 })}
-                        descripcion={editValues.descripcion}
-                        setDescripcion={(v: string) => setEditValues({ ...editValues, descripcion: v })}
-                        styles={{ input: commonStyles.input, label: commonStyles.label }}
-                      />
-
-                      <TouchableOpacity
-                        style={[commonStyles.button, { backgroundColor: colors.primary, marginTop: 8 }]}
-                        onPress={handleEditPet}
-                      >
-                        <Text style={commonStyles.buttonText}>Guardar</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={[commonStyles.button, { backgroundColor: colors.secondary }]}
-                        onPress={() => setEditMode(false)}
-                      >
-                        <Text style={commonStyles.buttonText}>Cancelar</Text>
-                      </TouchableOpacity>
-                    </>
-                  )}
+          <View style={styles.profileHeaderBg} />
+          
+          <View style={styles.profileBody}>
+            <View style={styles.avatarContainer}>
+              {user?.profile_picture ? (
+                 <Image source={{ uri: user.profile_picture }} style={styles.avatarImage} />
+              ) : (
+                <View style={styles.avatarPlaceholder}>
+                   <Text style={styles.avatarText}>
+                      {user?.name?.substring(0, 2).toUpperCase() || 'US'}
+                   </Text>
                 </View>
-              </TouchableWithoutFeedback>
-            </View>
-          </TouchableWithoutFeedback>
-        </Modal>
-
-        <Modal
-          visible={showUserModal}
-          transparent
-          animationType="slide"
-          onRequestClose={() => setShowUserModal(false)}
-        >
-          <TouchableWithoutFeedback onPress={() => setShowUserModal(false)}>
-            <View style={styles.modalOverlay}>
-              <TouchableWithoutFeedback>
-                <UserCard
-                  user={user}
-                  onEdit={() => {
-                    setShowUserModal(false);
-                    navigation.navigate('EditProfile');
-                  }}
-                  onClose={() => setShowUserModal(false)}
-                />
-              </TouchableWithoutFeedback>
-            </View>
-          </TouchableWithoutFeedback>
-        </Modal>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Ajustes</Text>
-          <View style={styles.menuCard}>
-            {menuItems.map((item, idx) => (
-              <View key={item.label}>
-                <TouchableOpacity style={styles.menuItem}>
-                  <View style={styles.menuIconBox}>
-                    <Icon name={item.icon} size={22} color={colors.primary} />
-                  </View>
-                  <Text style={styles.menuLabel}>{item.label}</Text>
-                </TouchableOpacity>
-                {idx < menuItems.length - 1 && <View style={styles.separator} />}
+              )}
+              <View style={styles.editIconBadge}>
+                 <Icon name="pencil" size={12} color="#FFF" />
               </View>
-            ))}
-          </View>
-        </View>
+            </View>
 
-        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-          <Icon name="logout" size={18} color="#EB5757" style={{ marginRight: 8 }} />
-          <Text style={styles.logoutBtnText}>Cerrar sesión</Text>
+            <View style={styles.userInfo}>
+              <Text style={styles.userName}>{user?.name || 'Usuario'}</Text>
+              <Text style={styles.userEmail}>{user?.email || 'cargando...'}</Text>
+              <View style={styles.roleBadge}>
+                 <Icon name="shield-account" size={12} color={colors.primary} style={{ marginRight: 4 }} />
+                 <Text style={styles.roleText}>{user?.role === 'petpal' ? 'Cuidador PetPal' : 'Cliente'}</Text>
+              </View>
+            </View>
+            
+            <Icon name="chevron-right" size={24} color="#CCC" style={{ marginLeft: 'auto' }} />
+          </View>
         </TouchableOpacity>
 
-        <Text style={styles.versionText}>PetPal v1.0.0 © 2025</Text>
+        {/* 2. SECCIÓN MASCOTAS (Horizontal Scroll) */}
+        <View style={styles.sectionHeader}>
+           <Text style={styles.sectionTitle}>Mis Mascotas</Text>
+           <TouchableOpacity 
+             style={styles.addButton} 
+             onPress={() => navigation.navigate('AddPet')}
+           >
+              <Icon name="plus" size={16} color={colors.primary} />
+              <Text style={styles.addButtonText}>Agregar</Text>
+           </TouchableOpacity>
+        </View>
+
+        {pets.length === 0 ? (
+          <View style={styles.emptyPets}>
+             <Icon name="paw-off" size={30} color="#DDD" />
+             <Text style={styles.emptyText}>Aún no tienes mascotas registradas.</Text>
+          </View>
+        ) : (
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false} 
+            contentContainerStyle={styles.petsScroll}
+          >
+            {pets.map((pet) => (
+              <TouchableOpacity
+                key={pet.id}
+                style={styles.petCardWrapper}
+                activeOpacity={0.8}
+                onPress={() => {
+                  setSelectedPet(pet);
+                  setEditValues(pet);
+                  setEditMode(false);
+                }}
+              >
+                <PetCard {...pet} showActions={false} /> 
+                {/* Nota: PetCard debería ser adaptable o tener un modo 'mini' si prefieres */}
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        )}
+
+        {/* 3. MENÚ DE AJUSTES */}
+        <Text style={[styles.sectionTitle, { marginTop: 20, marginBottom: 10 }]}>Cuenta</Text>
+        <View style={styles.menuContainer}>
+          {menuItems.map((item, index) => (
+            <View key={index}>
+              <TouchableOpacity style={styles.menuItem}>
+                <View style={[styles.menuIcon, { backgroundColor: '#F5F5F5' }]}>
+                   <Icon name={item.icon} size={20} color="#555" />
+                </View>
+                <Text style={styles.menuText}>{item.label}</Text>
+                <Icon name="chevron-right" size={20} color="#DDD" />
+              </TouchableOpacity>
+              {index < menuItems.length - 1 && <View style={styles.divider} />}
+            </View>
+          ))}
+        </View>
+
+        {/* 4. LOGOUT */}
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+           <Text style={styles.logoutText}>Cerrar Sesión</Text>
+        </TouchableOpacity>
+
+        <Text style={styles.versionInfo}>PetPal App v1.0.2</Text>
+
       </ScrollView>
+
+      {/* --- MODALES --- */}
+
+      {/* Modal Editar Mascota */}
+      <Modal
+        visible={!!selectedPet}
+        transparent
+        animationType="slide"
+        onRequestClose={() => { setEditMode(false); setSelectedPet(null); }}
+      >
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={{ flex: 1 }}
+        >
+        <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+               <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>
+                    {editMode ? 'Editar Mascota' : 'Detalle de Mascota'}
+                  </Text>
+                  <TouchableOpacity onPress={() => { setEditMode(false); setSelectedPet(null); }}>
+                     <Icon name="close" size={24} color="#888" />
+                  </TouchableOpacity>
+               </View>
+               
+               <ScrollView style={{ maxHeight: 400 }}>
+                 {selectedPet && !editMode && (
+                    <PetCard 
+                      {...selectedPet} 
+                      showActions 
+                      onEdit={() => setEditMode(true)}
+                      onDelete={handleDeletePet}
+                    />
+                 )}
+
+                 {selectedPet && editMode && (
+                    <View style={{ paddingBottom: 20 }}>
+                      <PetForm
+                        name={editValues.name}
+                        setNombre={(v) => setEditValues({ ...editValues, name: v })}
+                        pet_type={editValues.pet_type}
+                        setPetType={(v) => setEditValues({ ...editValues, pet_type: v })}
+                        weight={editValues.weight}
+                        setPeso={(v) => setEditValues({ ...editValues, weight: parseFloat(v) || null })}
+                        breed={editValues.breed}
+                        setRaza={(v) => setEditValues({ ...editValues, breed: v })}
+                        age={editValues.age}
+                        setEdad={(v) => setEditValues({ ...editValues, age: parseInt(v) || 0 })}
+                        descripcion={editValues.descripcion}
+                        setDescripcion={(v) => setEditValues({ ...editValues, descripcion: v })}
+                        styles={{ input: commonStyles.input, label: commonStyles.label }}
+                      />
+                      <View style={styles.modalActions}>
+                        <TouchableOpacity style={[styles.btn, styles.btnPrimary]} onPress={handleEditPet}>
+                           <Text style={styles.btnTextWhite}>Guardar Cambios</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={[styles.btn, styles.btnSecondary]} onPress={() => setEditMode(false)}>
+                           <Text style={styles.btnTextPrimary}>Cancelar</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                 )}
+               </ScrollView>
+            </View>
+        </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* Modal Editar Usuario */}
+      <Modal
+        visible={showUserModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowUserModal(false)}
+      >
+         <View style={styles.modalOverlay}>
+            <UserCard
+               user={user}
+               onEdit={() => {
+                 setShowUserModal(false);
+                 navigation.navigate('EditProfile');
+               }}
+               onClose={() => setShowUserModal(false)}
+            />
+         </View>
+      </Modal>
+
     </SafeAreaView>
   );
 }
 
-
-
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#FAFAFA',
+  },
+  scrollContent: {
+    padding: 20,
+    paddingBottom: 40,
+  },
+  
+  // Profile Card
   profileCard: {
-    backgroundColor: '#fff',
-    borderRadius: 32,
-    marginBottom: 12,
-    overflow: 'hidden',
-    elevation: 2,
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-  },
-  profileHeader: {
-    height: 36,
-    backgroundColor: '#D1FADF',
-    borderTopLeftRadius: 32,    // <--- agrega esto
-    borderTopRightRadius: 32,   // <--- agrega esto
-  },
-  avatarBox: { alignItems: 'center', marginTop: -20 }, // menos superposición
-  avatar: {
-    height: 56, // más chico
-    width: 56,
-    borderRadius: 28, // mantiene el redondeado
-    backgroundColor: '#E8F6EF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 3,
-    borderColor: '#fff'
-  },
-  avatarText: { color: '#219653', fontWeight: 'bold', fontSize: 22 }, // más chico
-  profileInfo: { alignItems: 'center', marginTop: 4, marginBottom: 8 }, // menos espacio
-  profileName: { fontSize: 16, fontWeight: 'bold', color: '#22223B' }, // más chico
-  profileEmail: { color: '#888', marginBottom: 4, fontSize: 13 }, // más chico
-  editBtn: {
-    backgroundColor: '#6FCF97',
+    backgroundColor: '#FFF',
     borderRadius: 20,
-    paddingVertical: 4,
-    paddingHorizontal: 12,
-    marginTop: 4,
+    marginBottom: 24,
+    // Sombra
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 4,
+    overflow: 'hidden',
   },
-  editBtnText: { color: '#fff', fontWeight: 'bold', textAlign: 'center', fontSize: 14 },
-  section: { marginBottom: 24 },
-  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  sectionTitle: { fontSize: 17, fontWeight: 'bold', color: '#22223B' },
-  addPetBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#E8F6EF', borderRadius: 20, paddingVertical: 4, paddingHorizontal: 12 },
-  addPetBtnText: { color: '#219653', fontWeight: 'bold', marginLeft: 4 },
-  menuCard: { backgroundColor: '#fff', borderRadius: 14, overflow: 'hidden', elevation: 1 },
-  menuItem: { flexDirection: 'row', alignItems: 'center', padding: 14 },
-  menuIconBox: { height: 36, width: 36, borderRadius: 18, backgroundColor: '#E8F6EF', alignItems: 'center', justifyContent: 'center', marginRight: 12 },
-  menuLabel: { fontSize: 15, color: '#22223B' },
-  separator: { height: 1, backgroundColor: '#F0F0F0', marginHorizontal: 14 },
-  logoutBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#EB5757', borderRadius: 20, paddingVertical: 10, marginBottom: 18, marginTop: 10 },
-  logoutBtnText: { color: '#EB5757', fontWeight: 'bold', fontSize: 16 },
-  versionText: { color: '#888', fontSize: 12, textAlign: 'center', marginBottom: 18 },
+  profileHeaderBg: {
+    height: 60,
+    backgroundColor: '#E8F6EF', // Verde claro
+  },
+  profileBody: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    marginTop: -30, // Avatar overlap
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+  },
+  avatarContainer: {
+    position: 'relative',
+    marginRight: 16,
+  },
+  avatarImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    borderWidth: 4,
+    borderColor: '#FFF',
+  },
+  avatarPlaceholder: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 4,
+    borderColor: '#FFF',
+  },
+  avatarText: {
+    fontSize: 28,
+    color: '#FFF',
+    fontWeight: 'bold',
+  },
+  editIconBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: '#333',
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#FFF',
+  },
+  userInfo: {
+    flex: 1,
+    paddingBottom: 5,
+  },
+  userName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  userEmail: {
+    fontSize: 13,
+    color: '#888',
+    marginBottom: 6,
+  },
+  roleBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F0F9F4',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  roleText: {
+    fontSize: 11,
+    color: colors.primary,
+    fontWeight: '600',
+  },
+
+  // Section Headers
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  addButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E8F6EF',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  addButtonText: {
+    color: colors.primary,
+    fontSize: 12,
+    fontWeight: 'bold',
+    marginLeft: 4,
+  },
+
+  // Pets Scroll
+  petsScroll: {
+    paddingRight: 20,
+    gap: 12,
+  },
+  petCardWrapper: {
+    width: 280, // Ancho fijo para el carrusel
+  },
+  emptyPets: {
+    backgroundColor: '#FFF',
+    padding: 20,
+    borderRadius: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
+    borderStyle: 'dashed',
+  },
+  emptyText: {
+    color: '#AAA',
+    marginTop: 8,
+    fontSize: 14,
+  },
+
+  // Menu
+  menuContainer: {
+    backgroundColor: '#FFF',
+    borderRadius: 20,
+    paddingVertical: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 2,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+  },
+  menuIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 14,
+  },
+  menuText: {
+    flex: 1,
+    fontSize: 15,
+    color: '#333',
+    fontWeight: '500',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#F5F5F5',
+    marginLeft: 66, // Alineado con el texto
+  },
+
+  // Footer
+  logoutButton: {
+    marginTop: 30,
+    backgroundColor: '#FFF0F0',
+    paddingVertical: 16,
+    borderRadius: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#FFCDD2',
+  },
+  logoutText: {
+    color: '#E53935',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  versionInfo: {
+    textAlign: 'center',
+    color: '#AAA',
+    fontSize: 12,
+    marginTop: 20,
+  },
+
+  // Modals
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.18)',
+    backgroundColor: 'rgba(0,0,0,0.4)',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  modalFormContent: {
-    backgroundColor: '#fff',
-    borderRadius: 14,
     padding: 20,
-    width: '92%',
-    minWidth: 300,
-    maxWidth: 400,
-    alignItems: 'stretch',
-    elevation: 2,
   },
-  label: {
-    fontSize: 14,
-    color: '#22223B',
-    marginBottom: 4,
+  modalContent: {
+    backgroundColor: '#FFF',
+    width: '100%',
+    borderRadius: 24,
+    padding: 20,
+    elevation: 10,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  modalActions: {
+    marginTop: 20,
+    gap: 10,
+  },
+  btn: {
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  btnPrimary: {
+    backgroundColor: colors.primary,
+  },
+  btnSecondary: {
+    backgroundColor: '#E8F6EF',
+  },
+  btnTextWhite: {
+    color: '#FFF',
+    fontWeight: 'bold',
+  },
+  btnTextPrimary: {
+    color: colors.primary,
+    fontWeight: 'bold',
   },
 });

@@ -8,7 +8,10 @@ import {
   ActivityIndicator,
   RefreshControl,
   Alert,
-  StyleSheet
+  StyleSheet,
+  Platform,
+  Keyboard,
+  TouchableWithoutFeedback
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -22,6 +25,7 @@ import { jwtDecode } from 'jwt-decode';
 
 const API_URL = 'https://petpal-backend-production.up.railway.app/api';
 
+// --- TIPOS (Mantenemos igual) ---
 type Pet = {
   id: number;
   name: string;
@@ -44,11 +48,12 @@ type Petpal = {
 };
 
 const SERVICE_OPTIONS = [
-  { key: 'Paseo de perros', label: 'Paseo' },
-  { key: 'Cuidado en casa', label: 'Cuidado' },
+  { key: 'Paseo de perros', label: 'Paseo de perros' },
+  { key: 'Cuidado en casa', label: 'Cuidado en casa' },
 ];
 
 export default function SearchScreen({ navigation }: any) {
+  // --- ESTADOS (Mantenemos igual) ---
   const [pets, setPets] = useState<Pet[]>([]);
   const [selectedPetId, setSelectedPetId] = useState<number | null>(null);
   const [location, setLocation] = useState('');
@@ -59,12 +64,10 @@ export default function SearchScreen({ navigation }: any) {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
+  // --- HELPERS (Mantenemos igual) ---
   const selectedPet = pets.find(p => p.id === selectedPetId);
   const sizeLabel = (w: number | null) =>
     w == null ? 'Desconocido' : w < 8 ? 'Chico' : w < 15 ? 'Mediano' : 'Grande';
-
-  const weightToSizeLabel = (w: number | null): string =>
-    w === null ? 'Desconocido' : w < 8 ? 'Chico' : w < 15 ? 'Mediano' : 'Grande';
 
   const translateSize = (size: string): string => {
     switch (size) {
@@ -75,6 +78,8 @@ export default function SearchScreen({ navigation }: any) {
       default: return 'Desconocido';
     }
   };
+
+  // --- LÓGICA DE NEGOCIO (Mantenemos igual) ---
   const requestService = async (petpalId: number, date: Date) => {
     if (!selectedPetId) {
       Alert.alert('Error', 'Debes seleccionar una mascota primero.');
@@ -86,7 +91,6 @@ export default function SearchScreen({ navigation }: any) {
       const decoded: any = jwtDecode(token);
       const client_id = decoded.id;
 
-      // formatea sólo YYYY-MM-DD y hora fija (ej: a las 10am)
       const dateOnly = date.toISOString().split('T')[0];
       const date_start = `${dateOnly}T10:00:00`;
       const date_end = `${dateOnly}T11:00:00`;
@@ -116,9 +120,6 @@ export default function SearchScreen({ navigation }: any) {
     }
   };
 
-
-
-  // Carga mascotas
   const loadPets = async () => {
     try {
       const data = await getMyPets();
@@ -127,6 +128,7 @@ export default function SearchScreen({ navigation }: any) {
       console.error(e);
     }
   };
+  
   useEffect(() => { loadPets(); }, []);
 
   const onRefresh = async () => {
@@ -135,16 +137,12 @@ export default function SearchScreen({ navigation }: any) {
     setRefreshing(false);
   };
 
-  // Búsqueda de PetPals
-  // 1) Cuando cambias de mascota, reseteá la lista de petpals
   useEffect(() => {
     setPetpals([]);
   }, [selectedPetId]);
 
-  // 2) Búsqueda de PetPals cuando estén todos los filtros listos
   useEffect(() => {
     const fetchPetpals = async () => {
-      // Si no hay mascota o servicio, no hacemos nada (pero no limpiamos el array)
       if (!selectedPetId || !service) return;
 
       setLoading(true);
@@ -152,7 +150,6 @@ export default function SearchScreen({ navigation }: any) {
 
       try {
         const results = await searchPetpalsByMascota(selectedPetId, location, svc);
-        console.log('▶︎ Petpals encontrados:', results);
         setPetpals(results);
       } catch (e) {
         console.error(e);
@@ -164,155 +161,343 @@ export default function SearchScreen({ navigation }: any) {
     fetchPetpals();
   }, [selectedPetId, location, service]);
 
+  // Cerrar dropdowns al tocar fuera o scrollear
+  const closeDropdowns = () => {
+    setShowPets(false);
+    setShowServices(false);
+    Keyboard.dismiss();
+  };
 
+  // --- RENDERIZADO ---
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
-      <ScrollView
-        contentContainerStyle={{ padding: 18 }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-      >
-        <ScreenHeader title="Buscar PetPals" subtitle="Conecta con cuidadores cerca" />
+    <TouchableWithoutFeedback onPress={closeDropdowns}>
+      <SafeAreaView style={styles.container}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+          keyboardShouldPersistTaps="handled"
+          onScrollBeginDrag={closeDropdowns}
+        >
+          <ScreenHeader title="Buscar PetPals" subtitle="Encuentra el cuidador ideal" />
 
-        {/* Selector Mascota */}
-        <View style={styles.filterColumn}>
-          <View style={styles.filterBoxColumn}>
-            <TouchableOpacity style={styles.filterSelectColumn} onPress={() => setShowPets(!showPets)}>
-              <Text style={selectedPet ? styles.filterSelectText : styles.filterSelectTextPlaceholder}>
-                {selectedPet
-                  ? `${selectedPet.name} (${selectedPet.pet_type === 'dog' ? 'Perro' : 'Gato'} – ${sizeLabel(selectedPet.weight)})`
-                  : 'Selecciona tu mascota'}
-              </Text>
-              <Icon name={showPets ? 'chevron-up' : 'chevron-down'} size={20} color={colors.primary} />
-            </TouchableOpacity>
-            {showPets && (
-              <View style={styles.dropdownColumn}>
-                {pets.map(m => (
-                  <TouchableOpacity
-                    key={m.id}
-                    style={styles.dropdownOption}
-                    onPress={() => { setSelectedPetId(m.id); setShowPets(false); }}
-                  >
-                    <Text style={{ color: colors.primary }}>{m.name}</Text>
-                  </TouchableOpacity>
-                ))}
+          {/* SECCIÓN DE FILTROS (DISEÑO CARDS) */}
+          <View style={styles.filtersContainer}>
+            
+            {/* 1. Input Ubicación (Search Bar Style) */}
+            <View style={styles.searchBarContainer}>
+               <Icon name="map-marker" size={20} color={colors.primary} style={styles.searchIcon} />
+               <TextInput
+                 style={styles.searchInput}
+                 placeholder="¿En qué zona buscas? (Ej: Centro)"
+                 value={location}
+                 onChangeText={setLocation}
+                 placeholderTextColor="#999"
+                 onFocus={closeDropdowns}
+               />
+               {location.length > 0 && (
+                 <TouchableOpacity onPress={() => setLocation('')}>
+                    <Icon name="close-circle" size={18} color="#CCC" />
+                 </TouchableOpacity>
+               )}
+            </View>
+
+            <View style={styles.rowFilters}>
+              {/* 2. Selector Mascota */}
+              <View style={[styles.filterGroup, { zIndex: 2000 }]}>
+                <Text style={styles.label}>Mascota</Text>
+                <TouchableOpacity 
+                  style={[styles.dropdownTrigger, showPets && styles.dropdownActive]} 
+                  onPress={() => {
+                    setShowServices(false); // Cierra el otro
+                    setShowPets(!showPets);
+                    Keyboard.dismiss();
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <View style={{flex: 1}}>
+                    <Text style={selectedPet ? styles.selectedText : styles.placeholderText} numberOfLines={1}>
+                      {selectedPet ? selectedPet.name : 'Seleccionar'}
+                    </Text>
+                    {selectedPet && (
+                       <Text style={styles.subText}>{sizeLabel(selectedPet.weight)}</Text>
+                    )}
+                  </View>
+                  <Icon name={showPets ? 'chevron-up' : 'chevron-down'} size={20} color={colors.primary} />
+                </TouchableOpacity>
+
+                {/* Dropdown Mascota */}
+                {showPets && (
+                  <View style={styles.dropdownMenu}>
+                    {pets.length > 0 ? pets.map(m => (
+                      <TouchableOpacity
+                        key={m.id}
+                        style={styles.dropdownItem}
+                        onPress={() => { setSelectedPetId(m.id); setShowPets(false); }}
+                      >
+                        <Icon name={m.pet_type === 'dog' ? 'dog' : 'cat'} size={16} color={colors.primary} style={{marginRight: 8}}/>
+                        <Text style={styles.itemText}>{m.name}</Text>
+                      </TouchableOpacity>
+                    )) : (
+                      <View style={styles.dropdownItem}>
+                         <Text style={{color: '#999', fontSize: 13}}>No tienes mascotas registradas</Text>
+                      </View>
+                    )}
+                  </View>
+                )}
               </View>
-            )}
-          </View>
-        </View>
 
-        {/* Selector Servicio */}
-        <View style={styles.filterColumn}>
-          <View style={styles.filterBoxColumn}>
-            <TouchableOpacity style={styles.filterSelectColumn} onPress={() => setShowServices(!showServices)}>
-              <Text style={service ? styles.filterSelectText : styles.filterSelectTextPlaceholder}>
-                {service ? SERVICE_OPTIONS.find(s => s.key === service)?.label : 'Tipo de servicio'}
-              </Text>
-              <Icon name={showServices ? 'chevron-up' : 'chevron-down'} size={20} color={colors.primary} />
-            </TouchableOpacity>
-            {showServices && (
-              <View style={styles.dropdownColumn}>
-                {SERVICE_OPTIONS.map(s => (
-                  <TouchableOpacity
-                    key={s.key}
-                    style={styles.dropdownOption}
-                    onPress={() => { setService(s.key); setShowServices(false); }}
-                  >
-                    <Text style={{ color: colors.primary }}>{s.label}</Text>
-                  </TouchableOpacity>
-                ))}
+              {/* 3. Selector Servicio */}
+              <View style={[styles.filterGroup, { zIndex: 1000 }]}>
+                <Text style={styles.label}>Servicio</Text>
+                <TouchableOpacity 
+                  style={[styles.dropdownTrigger, showServices && styles.dropdownActive]} 
+                  onPress={() => {
+                    setShowPets(false); // Cierra el otro
+                    setShowServices(!showServices);
+                    Keyboard.dismiss();
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <Text style={service ? styles.selectedText : styles.placeholderText} numberOfLines={1}>
+                    {service ? SERVICE_OPTIONS.find(s => s.key === service)?.label : 'Elegir'}
+                  </Text>
+                  <Icon name={showServices ? 'chevron-up' : 'chevron-down'} size={20} color={colors.primary} />
+                </TouchableOpacity>
+
+                {/* Dropdown Servicio */}
+                {showServices && (
+                  <View style={styles.dropdownMenu}>
+                    {SERVICE_OPTIONS.map(s => (
+                      <TouchableOpacity
+                        key={s.key}
+                        style={styles.dropdownItem}
+                        onPress={() => { setService(s.key); setShowServices(false); }}
+                      >
+                         <Icon name={s.key.includes('Paseo') ? 'dog-service' : 'home-heart'} size={16} color={colors.primary} style={{marginRight: 8}}/>
+                        <Text style={styles.itemText}>{s.label}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
               </View>
-            )}
-          </View>
-        </View>
+            </View>
 
-        {/* Input Ubicación */}
-        <View style={styles.filterColumn}>
-          <View style={styles.filterBoxColumn}>
-            <TextInput
-              style={styles.filterSelectColumn}
-              placeholder="Ubicación"
-              value={location}
-              onChangeText={setLocation}
-              placeholderTextColor={colors.primary}
-            />
           </View>
-        </View>
 
-        {/* Resultados */}
-        {loading ? (
-          <ActivityIndicator size="large" color={colors.primary} />
-        ) : petpals.length === 0 ? (
-          <Text style={{ color: '#888', textAlign: 'center', marginTop: 30 }}>
-            No se encontraron cuidadores.
-          </Text>
-        ) : (
-          petpals.map(c => (
-            <PetPalCard
-              key={c.id}
-              petpal={c}
-              translateSize={translateSize}
-              onPressProfile={id => navigation.navigate('Perfil', { caretakerId: id })}
-              onRequest={(_ignoredPetpalProfileId, date) =>
-                // aquí le pasamos el user_id en lugar de petpal_profiles.id
-                requestService(c.user_id, date)
-              }
-            />
-          ))
-        )}
-      </ScrollView>
-    </SafeAreaView>
+          {/* RESULTADOS */}
+          <View style={styles.resultsHeader}>
+             <Text style={styles.sectionTitle}>Resultados</Text>
+             {petpals.length > 0 && <Text style={styles.resultsCount}>{petpals.length} encontrados</Text>}
+          </View>
+
+          {loading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={colors.primary} />
+              <Text style={styles.loadingText}>Buscando los mejores cuidadores...</Text>
+            </View>
+          ) : petpals.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Icon name={(!selectedPetId || !service) ? "magnify-scan" : "emoticon-sad-outline"} size={50} color="#DDD" />
+              <Text style={styles.emptyTitle}>
+                {(!selectedPetId || !service) 
+                  ? 'Comienza tu búsqueda' 
+                  : 'No encontramos cuidadores'}
+              </Text>
+              <Text style={styles.emptySubtitle}>
+                {(!selectedPetId || !service) 
+                  ? 'Selecciona una mascota y un servicio para ver los PetPals disponibles.' 
+                  : 'Intenta cambiar la ubicación o los filtros para ver más resultados.'}
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.listContainer}>
+              {petpals.map(c => (
+                <PetPalCard
+                  key={c.id}
+                  petpal={c}
+                  translateSize={translateSize}
+                  onPressProfile={id => navigation.navigate('Perfil', { caretakerId: id })}
+                  onRequest={(_ignored, date) => requestService(c.user_id, date)}
+                />
+              ))}
+            </View>
+          )}
+        </ScrollView>
+      </SafeAreaView>
+    </TouchableWithoutFeedback>
   );
 }
 
 const styles = StyleSheet.create({
-  filterColumn: {
-    flexDirection: 'column',
+  container: {
+    flex: 1,
+    backgroundColor: '#FAFAFA', // Fondo general limpio
+  },
+  scrollContent: {
+    padding: 20,
+    paddingBottom: 40,
+  },
+  
+  // Contenedor de Filtros
+  filtersContainer: {
+    marginBottom: 20,
+  },
+  searchBarContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    height: 50,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    marginBottom: 16,
+    // Sombra suave
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#333',
+    height: '100%',
+  },
+
+  rowFilters: {
+    flexDirection: 'row',
     gap: 12,
-    marginBottom: 10,
   },
-  filterBoxColumn: {
-    marginBottom: 0,
-    position: 'relative',
+  filterGroup: {
+    flex: 1,
+    position: 'relative', // Necesario para el dropdown absoluto
   },
-  filterSelectColumn: {
-    backgroundColor: '#E8F6EF',
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: '#219653',
-    paddingHorizontal: 14,
+  label: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#888',
+    marginBottom: 6,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  dropdownTrigger: {
+    backgroundColor: '#FFF',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    paddingHorizontal: 12,
     paddingVertical: 10,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    minHeight: 56, // Altura cómoda para dedo
   },
-  filterSelectText: {
+  dropdownActive: {
+    borderColor: colors.primary,
+    backgroundColor: '#F6FFF8',
+  },
+  selectedText: {
     color: colors.primary,
     fontWeight: 'bold',
-    fontSize: 15,
+    fontSize: 14,
   },
-  filterSelectTextPlaceholder: {
-    color: colors.primary,
-    opacity: 1,
-    fontWeight: 'normal',
-    fontSize: 15,
+  subText: {
+    color: '#888',
+    fontSize: 11,
+    marginTop: 2,
   },
-  dropdownColumn: {
+  placeholderText: {
+    color: '#999',
+    fontSize: 14,
+  },
+  
+  // Dropdown Flotante
+  dropdownMenu: {
     position: 'absolute',
-    top: 48,
+    top: '100%', // Justo debajo del trigger
     left: 0,
     right: 0,
-    backgroundColor: '#fff',
+    marginTop: 6,
+    backgroundColor: '#FFF',
     borderRadius: 12,
-    elevation: 4,
-    zIndex: 10,
     paddingVertical: 4,
+    // Sombra fuerte para flotar
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
   },
-  dropdownOption: {
-    paddingVertical: 10,
+  dropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
     paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F5F5F5',
   },
-  caretakerCard: { /* ya no usamos PetCard */ },
-  caretakerName: { /* idem */ },
-  caretakerInfo: { /* idem */ },
-  caretakerServices: { /* idem */ },
+  itemText: {
+    color: '#333',
+    fontSize: 14,
+  },
+
+  // Resultados
+  resultsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    marginBottom: 12,
+    marginTop: 10,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  resultsCount: {
+    fontSize: 13,
+    color: '#666',
+  },
+  listContainer: {
+    gap: 16,
+  },
+  
+  // Estados de Carga y Vacío
+  loadingContainer: {
+    paddingVertical: 40,
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 12,
+    color: colors.primary,
+    fontSize: 14,
+  },
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 50,
+    paddingHorizontal: 20,
+    opacity: 0.8,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#555',
+    marginTop: 16,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  emptySubtitle: {
+    fontSize: 14,
+    color: '#999',
+    textAlign: 'center',
+    lineHeight: 20,
+  },
 });
