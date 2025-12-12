@@ -1,10 +1,10 @@
-// src/services/reservations.ts
 import api from '../../api';
 import { getToken } from '../storage/token';
 
+// 🟢 CREAR RESERVA (Con profile_id obligatorio)
 export const createReservation = async (payload: {
-  client_id: number;
   petpal_id: number;
+  profile_id: number;
   pet_id: number;
   service_type: 'dog walker' | 'caregiver';
   date_start: string;
@@ -17,16 +17,19 @@ export const createReservation = async (payload: {
   return res.data;
 };
 
-export async function getPetPalReservations() {
+// 🟢 OBTENER HISTORIAL (Unificado)
+export async function getReservationHistory() {
   const token = await getToken();
-  const res = await fetch('https://petpal-backend-production.up.railway.app/api/reservations/petpal/1', {
+  
+  const res = await api.get('/reservations/history', {
     headers: { Authorization: `Bearer ${token}` },
   });
-  const json = await res.json();
-  console.log('Respuesta reservas PetPal:', json);
-  return json.data;
+  
+  return res.data.data; 
 };
 
+// Alias para compatibilidad
+export const getPetPalReservations = getReservationHistory;
 
 export async function updateReservationStatus(
   id: number,
@@ -40,4 +43,3 @@ export async function updateReservationStatus(
   );
   return data;
 }
-
