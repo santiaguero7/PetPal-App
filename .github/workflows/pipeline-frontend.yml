@@ -2,9 +2,9 @@ name: 📱 PetPal Frontend CI/CD (Web)
 
 on:
   push:
-    branches: [ "develop", "master" ] # CAMBIO AQUÍ
+    branches: [ "develop", "master" ]
   pull_request:
-    branches: [ "master" ] # CAMBIO AQUÍ
+    branches: [ "master" ]
 
 permissions:
   contents: write
@@ -16,7 +16,7 @@ env:
   VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
 
 jobs:
-  # 1. BUILD CHECK
+  # 1. BUILD CHECK (Verifica que no haya errores de compilación)
   build-check:
     name: 🏗️ Build Check
     runs-on: ubuntu-latest
@@ -33,7 +33,7 @@ jobs:
       - name: 🏗️ Prueba de Construcción
         run: npm run build:web
 
-  # 2. DEPLOY A QA (Automático en Develop)
+  # 2. DEPLOY A QA (Automático al hacer push a Develop)
   deploy-qa:
     name: 🚀 Deploy QA (Preview)
     needs: build-check
@@ -51,32 +51,14 @@ jobs:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: '--preview'
+          # Sin argumentos, Vercel despliega en modo Preview por defecto
           working-directory: ./
 
-  # 3. AUTO-PR
-  create-pr:
-    name: 🤖 Auto-PR
-    needs: build-check
-    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
-    runs-on: ubuntu-latest
-    steps:
-      - name: 📥 Checkout
-        uses: actions/checkout@v4
-      - name: 🤖 Crear PR
-        uses: repo-sync/pull-request@v2
-        with:
-          source_branch: "develop"
-          destination_branch: "master" # CAMBIO AQUÍ (Destino es master)
-          pr_title: "🚀 Frontend Release Candidate"
-          pr_body: "Frontend listo. Aprueba para pasar a Producción."
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-
-  # 4. DEPLOY A PRODUCCIÓN (Con Candado)
+  # 3. DEPLOY A PRODUCCIÓN (Solo al mezclar en Master -> Con Candado)
   deploy-production:
     name: 🛡️ Deploy Production
     needs: build-check
-    if: github.ref == 'refs/heads/master' # CAMBIO AQUÍ (Si es master)
+    if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     environment:
       name: production
@@ -92,5 +74,5 @@ jobs:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: '--prod'
+          vercel-args: '--prod' # Forzamos producción
           working-directory: ./
