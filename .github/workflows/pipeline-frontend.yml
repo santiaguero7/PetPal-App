@@ -1,0 +1,78 @@
+name: 📱 PetPal Frontend CI/CD (Web)
+
+on:
+  push:
+    branches: [ "develop", "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+  VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+
+jobs:
+  # 1. BUILD CHECK (Verifica que no haya errores de compilación)
+  build-check:
+    name: 🏗️ Build Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+      - name: 🟢 Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - name: 📦 Instalar Dependencias
+        run: npm ci
+      - name: 🏗️ Prueba de Construcción
+        run: npm run build:web
+
+  # 2. DEPLOY A QA (Automático al hacer push a Develop)
+  deploy-qa:
+    name: 🚀 Deploy QA (Preview)
+    needs: build-check
+    if: github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    environment:
+      name: qa
+      url: https://petpal-frontend-git-develop.vercel.app
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+      - name: 🚀 Deploy a Vercel (QA)
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          # Sin argumentos, Vercel despliega en modo Preview por defecto
+          working-directory: ./
+
+  # 3. DEPLOY A PRODUCCIÓN (Solo al mezclar en Master -> Con Candado)
+  deploy-production:
+    name: 🛡️ Deploy Production
+    needs: build-check
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://petpal-frontend.vercel.app
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+      - name: 🛑 Aprobación Manual
+        run: echo "🔐 Despliegue aprobado por el usuario."
+      - name: 🚀 Deploy a Vercel (Producción)
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod' # Forzamos producción
+          working-directory: ./
