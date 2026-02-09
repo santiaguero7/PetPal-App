@@ -79,7 +79,7 @@ export default function LoginScreen({ navigation }: Props) {
               style={styles.logo}
             />
           </View>
-          <Text style={styles.welcomeText}>¡Hola de nuevo!</Text>
+          <Text style={styles.welcomeText}>¡Hola de nuevo CI-CD!</Text>
           <Text style={styles.subText}>Tu mascota te espera 🐾</Text>
         </View>
 
