@@ -115,10 +115,10 @@ describe('INTEGRACIÓN: Servicio de Autenticación', () => {
   test('Registro falla con DNI inválido', async () => {
     const isValidDni = (dni: string) => /^\d{7,8}$/.test(dni);
     
-    const dni = '12345678';  // DNI inválido
+    const dni = '1234ABC8';  // DNI inválido (contiene letras)
     
     // Esta validación SÍ hace fallar el test
-    expect(isValidDni(dni)).toBe(false);  // ❌ FALLA porque el DNI tiene letras
+    expect(isValidDni(dni)).toBe(false);  // ✅ FALLA porque el DNI tiene letras
   });
 });
 
