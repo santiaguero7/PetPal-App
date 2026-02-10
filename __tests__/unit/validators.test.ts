@@ -115,7 +115,7 @@ test('TEST 7: Tipo "bird" debe ser inválido', () => {
 
 // TEST 8: DNI válido
 test('TEST 8: DNI de 8 dígitos debe ser válido', () => {
-  expect(isValidDni('12345678asdasddsa21321')).toBe(true);
+  expect(isValidDni('12345678')).toBe(true);
 });
 
 // TEST 9: Cálculo de precio
