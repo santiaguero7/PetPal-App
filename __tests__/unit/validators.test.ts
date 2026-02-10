@@ -1,134 +1,252 @@
 /**
  * ===========================================
- * 11 TESTS UNITARIOS - PetPal App
+ * TESTS UNITARIOS - Services Reales PetPal
  * ===========================================
- * 
- * Tests simples y fáciles de entender.
+ *
+ * Testea las funciones REALES de src/services/
+ * (auth, users, pets, reservations) con mocks de api y token.
+ *
  * Para ejecutar: npm run test:unit
- * 
  * ===========================================
  */
 
 // ============================================
-// FUNCIONES A TESTEAR
+// MOCKS (deben ir antes de los imports)
 // ============================================
+jest.mock('../../api', () => ({
+  __esModule: true,
+  default: {
+    get: jest.fn(),
+    post: jest.fn(),
+    put: jest.fn(),
+    delete: jest.fn(),
+  },
+}));
 
-// 1. Validar email
-const isValidEmail = (email: string): boolean => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
-};
-
-// 2. Validar contraseña (mínimo 6 caracteres)
-const isValidPassword = (password: string): boolean => {
-  return password.length >= 6;
-};
-
-// 3. Validar peso de mascota (entre 0 y 200 kg)
-const isValidPetWeight = (weight: number): boolean => {
-  return weight > 0 && weight <= 200;
-};
-
-// 4. Validar edad de mascota (entre 0 y 30 años)
-const isValidPetAge = (age: number): boolean => {
-  return age >= 0 && age <= 30;
-};
-
-// 5. Validar tipo de mascota (solo dog o cat)
-const isValidPetType = (type: string): boolean => {
-  return type === 'dog' || type === 'cat';
-};
-
-// 6. Validar DNI argentino (7-8 dígitos)
-const isValidDni = (dni: string): boolean => {
-  const dniRegex = /^\d{7,8}$/;
-  return dniRegex.test(dni);
-};
-
-// 7. Calcular precio total
-const calculateTotalPrice = (pricePerHour: number, hours: number): number => {
-  if (pricePerHour <= 0 || hours <= 0) return 0;
-  return pricePerHour * hours;
-};
-
-// 8. Validar coordenadas geográficas
-const isValidCoordinates = (lat: number, lng: number): boolean => {
-  return lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
-};
-
-// 9. Calcular días entre fechas
-const calculateDaysBetween = (startDate: string, endDate: string): number => {
-  const start = new Date(startDate);
-  const end = new Date(endDate);
-  const diffTime = Math.abs(end.getTime() - start.getTime());
-  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-};
-
-// 10. Validar nombre (entre 2 y 100 caracteres)
-const isValidName = (name: string): boolean => {
-  return name.trim().length >= 2 && name.trim().length <= 100;
-};
-
-// 11. Sanitizar email (minúsculas y sin espacios)
-const sanitizeEmail = (email: string): string => {
-  return email.trim().toLowerCase();
-};
+jest.mock('../../src/storage/token', () => ({
+  getToken: jest.fn(),
+}));
 
 // ============================================
-// LOS 11 TESTS UNITARIOS
+// IMPORTS REALES DE SERVICES
 // ============================================
+import { registerUser, loginUser } from '../../src/services/auth';
+import { getMe, getUserById, updateUser } from '../../src/services/users';
+import { getMyPets, createPet, updatePetById, deletePetById } from '../../src/services/pets';
+import { createReservation, getReservationHistory, updateReservationStatus } from '../../src/services/reservations';
 
-// TEST 1: Email válido
-test('TEST 1: Email válido debe retornar true', () => {
-  expect(isValidEmail('usuario@xample.com')).toBe(true);
+import api from '../../api';
+import { getToken } from '../../src/storage/token';
+
+// Tipamos los mocks para acceder a mockResolvedValue, etc.
+const mockedApi = api as jest.Mocked<typeof api>;
+const mockedGetToken = getToken as jest.MockedFunction<typeof getToken>;
+
+// ============================================
+// AUTH SERVICE
+// ============================================
+describe('Auth Service - src/services/auth.ts', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  test('registerUser: envía POST /auth/register con todos los campos', async () => {
+    const fakeResponse = { id: 1, name: 'Juan', email: 'juan@mail.com' };
+    mockedApi.post.mockResolvedValueOnce({ data: fakeResponse });
+
+    const result = await registerUser(
+      '', 'juan@mail.com', 'Pass123', 'client',
+      '12345678', 'Calle 123', 'Palermo', '1122334455', 'Buenos Aires',
+      -34.6037, -58.3816, null
+    );
+
+    expect(mockedApi.post).toHaveBeenCalledWith('/auth/register', {
+      name: 'Juan',
+      email: 'juan@mail.com',
+      password: 'Pass123',
+      role: 'client',
+      dni: '12345678',
+      direccion: 'Calle 123',
+      barrio: 'Palermo',
+      telefono: '1122334455',
+      ciudad: 'Buenos Aires',
+      latitude: -34.6037,
+      longitude: -58.3816,
+      profile_picture: null,
+    });
+    expect(result).toEqual(fakeResponse);
+  });
+
+  test('loginUser: envía POST /auth/login y retorna data', async () => {
+    const fakeToken = { token: 'abc123', user: { id: 1 } };
+    mockedApi.post.mockResolvedValueOnce({ data: fakeToken });
+
+    const result = await loginUser('juan@mail.com', 'Pass123');
+
+    expect(mockedApi.post).toHaveBeenCalledWith('/auth/login', {
+      email: 'juan@mail.com',
+      password: 'Pass123',
+    });
+    expect(result).toEqual(fakeToken);
+  });
+
+  test('loginUser: propaga error si la API falla', async () => {
+    mockedApi.post.mockRejectedValueOnce(new Error('Credenciales inválidas'));
+
+    await expect(loginUser('bad@mail.com', 'wrong')).rejects.toThrow('Credenciales inválidas');
+  });
 });
 
-// TEST 2: Email inválido
-test('TEST 2: Email sin @ debe retornar false', () => {
-  expect(isValidEmail('usuarioexample.com')).toBe(false);
+describe('Users Service - src/services/users.ts', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  test('getMe: envía GET /users/me con token y retorna perfil', async () => {
+    mockedGetToken.mockResolvedValueOnce('token-123');
+    const fakeUser = { id: 1, name: 'Juan', email: 'juan@mail.com' };
+    mockedApi.get.mockResolvedValueOnce({ data: fakeUser });
+
+    const result = await getMe();
+
+    expect(mockedApi.get).toHaveBeenCalledWith('/users/me', {
+      headers: { Authorization: 'Bearer token-123' },
+    });
+    expect(result).toEqual(fakeUser);
+  });
+
+  test('getMe: lanza error si no hay token', async () => {
+    mockedGetToken.mockResolvedValueOnce(null);
+
+    await expect(getMe()).rejects.toThrow('Token no disponible');
+    expect(mockedApi.get).not.toHaveBeenCalled();
+  });
+
+  test('getUserById: envía GET /users/:id con token', async () => {
+    mockedGetToken.mockResolvedValueOnce('token-abc');
+    const fakeUser = { id: 5, name: 'María' };
+    mockedApi.get.mockResolvedValueOnce({ data: fakeUser });
+
+    const result = await getUserById(5);
+
+    expect(mockedApi.get).toHaveBeenCalledWith('/users/5', {
+      headers: { Authorization: 'Bearer token-abc' },
+    });
+    expect(result).toEqual(fakeUser);
+  });
+
+  test('updateUser: envía PUT /users/:id con data y token', async () => {
+    mockedGetToken.mockResolvedValueOnce('token-xyz');
+    const updatedData = { name: 'Juan Carlos', barrio: 'Recoleta' };
+    mockedApi.put.mockResolvedValueOnce({ data: { ...updatedData, id: 1 } });
+
+    const result = await updateUser(1, updatedData);
+
+    expect(mockedApi.put).toHaveBeenCalledWith('/users/1', updatedData, {
+      headers: { Authorization: 'Bearer token-xyz' },
+    });
+    expect(result).toEqual({ ...updatedData, id: 1 });
+  });
 });
 
-// TEST 3: Contraseña válida
-test('TEST 3: Contraseña de 6+ caracteres debe ser válida', () => {
-  expect(isValidPassword('123456')).toBe(true);
+describe('Pets Service - src/services/pets.ts', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  test('getMyPets: envía GET /pets/user/me con token', async () => {
+    mockedGetToken.mockResolvedValueOnce('token-pets');
+    const fakePets = [{ id: 1, name: 'Firulais', type: 'dog' }];
+    mockedApi.get.mockResolvedValueOnce({ data: fakePets });
+
+    const result = await getMyPets();
+
+    expect(mockedApi.get).toHaveBeenCalledWith('/pets/user/me', {
+      headers: { Authorization: 'Bearer token-pets' },
+    });
+    expect(result).toEqual(fakePets);
+  });
+
+  test('createPet: envía POST /pets con datos de mascota', async () => {
+    mockedGetToken.mockResolvedValueOnce('token-pets');
+    const petData = { name: 'Luna', type: 'cat', weight: 4, age: 2 };
+    mockedApi.post.mockResolvedValueOnce({ data: { id: 2, ...petData } });
+
+    const result = await createPet(petData);
+
+    expect(mockedApi.post).toHaveBeenCalledWith('/pets', petData, {
+      headers: { Authorization: 'Bearer token-pets' },
+    });
+    expect(result.name).toBe('Luna');
+  });
+
+  test('updatePetById: envía PUT /pets/:id con datos actualizados', async () => {
+    mockedGetToken.mockResolvedValueOnce('token-pets');
+    const updatedData = { name: 'Firulais Jr', weight: 30 };
+    mockedApi.put.mockResolvedValueOnce({ data: { id: 1, ...updatedData } });
+
+    const result = await updatePetById(1, updatedData);
+
+    expect(mockedApi.put).toHaveBeenCalledWith('/pets/1', updatedData, {
+      headers: { Authorization: 'Bearer token-pets' },
+    });
+    expect(result.name).toBe('Firulais Jr');
+  });
+
+  test('deletePetById: envía DELETE /pets/:id con token', async () => {
+    mockedGetToken.mockResolvedValueOnce('token-pets');
+    mockedApi.delete.mockResolvedValueOnce({ data: { message: 'Eliminada' } });
+
+    const result = await deletePetById(3);
+
+    expect(mockedApi.delete).toHaveBeenCalledWith('/pets/3', {
+      headers: { Authorization: 'Bearer token-pets' },
+    });
+    expect(result.message).toBe('Eliminada');
+  });
 });
 
-// TEST 4: Contraseña inválida
-test('TEST 4: Contraseña de 5 caracteres debe ser inválida', () => {
-  expect(isValidPassword('12345')).toBe(false);
-});
+describe('Reservations Service - src/services/reservations.ts', () => {
+  beforeEach(() => jest.clearAllMocks());
 
-// TEST 5: Peso de mascota válido
-test('TEST 5: Peso de 25kg debe ser válido', () => {
-  expect(isValidPetWeight(25)).toBe(true);
-});
+  test('createReservation: envía POST /reservations con payload completo', async () => {
+    mockedGetToken.mockResolvedValueOnce('token-res');
+    const payload = {
+      petpal_id: 10,
+      profile_id: 1,
+      pet_id: 2,
+      service_type: 'dog walker' as const,
+      date_start: '2026-03-10',
+      date_end: '2026-03-10',
+    };
+    mockedApi.post.mockResolvedValueOnce({ data: { id: 50, ...payload, status: 'pending' } });
 
-// TEST 6: Tipo de mascota válido
-test('TEST 6: Tipo "dog" debe ser válido', () => {
-  expect(isValidPetType('dog')).toBe(true);
-});
+    const result = await createReservation(payload);
 
-// TEST 7: Tipo de mascota inválido
-test('TEST 7: Tipo "bird" debe ser inválido', () => {
-  expect(isValidPetType('bird')).toBe(false);
-});
+    expect(mockedApi.post).toHaveBeenCalledWith('/reservations', payload, {
+      headers: { Authorization: 'Bearer token-res' },
+    });
+    expect(result.status).toBe('pending');
+  });
 
-// TEST 8: DNI válido
-test('TEST 8: DNI de 8 dígitos debe ser válido', () => {
-  expect(isValidDni('12345678')).toBe(true);
-});
+  test('getReservationHistory: retorna historial del usuario', async () => {
+    mockedGetToken.mockResolvedValueOnce('token-res');
+    const fakeHistory = [{ id: 1, status: 'accepted' }, { id: 2, status: 'completed' }];
+    mockedApi.get.mockResolvedValueOnce({ data: { data: fakeHistory } });
 
-// TEST 9: Cálculo de precio
-test('TEST 9: 2 horas a $500 debe ser $1000', () => {
-  expect(calculateTotalPrice(500, 2)).toBe(1000);
-});
+    const result = await getReservationHistory();
 
-// TEST 10: Coordenadas válidas
-test('TEST 10: Coordenadas de Buenos Aires deben ser válidas', () => {
-  expect(isValidCoordinates(-34.6037, -58.3816)).toBe(true);
-});
+    expect(mockedApi.get).toHaveBeenCalledWith('/reservations/history', {
+      headers: { Authorization: 'Bearer token-res' },
+    });
+    expect(result).toHaveLength(2);
+  });
 
-// TEST 11: Sanitizar email
-test('TEST 11: Email debe quedar en minúsculas sin espacios', () => {
-  expect(sanitizeEmail('  Usuario@EXAMPLE.COM  ')).toBe('usuario@example.com');
+  test('updateReservationStatus: envía PUT con nuevo estado', async () => {
+    mockedGetToken.mockResolvedValueOnce('token-res');
+    mockedApi.put.mockResolvedValueOnce({ data: { message: 'Reserva aceptada' } });
+
+    const result = await updateReservationStatus(50, 'accepted');
+
+    expect(mockedApi.put).toHaveBeenCalledWith(
+      '/reservations/50/status',
+      { status: 'accepted' },
+      { headers: { Authorization: 'Bearer token-res' } }
+    );
+    expect(result.message).toBe('Reserva aceptada');
+  });
 });
