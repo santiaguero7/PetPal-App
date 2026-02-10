@@ -1,4 +1,4 @@
-name: 📱 PetPal Frontend CI/CD (Web)
+name: � PetPal Frontend Ultimate Pipeline
 
 on:
   push:
@@ -9,31 +9,142 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  checks: write
 
 env:
+  NODE_VERSION: '20'
   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
   VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
   VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
 
 jobs:
-  # 1. BUILD CHECK (Verifica que no haya errores de compilación)
-  build-check:
-    name: 🏗️ Build Check
+  # ------------------------------------------------------------------
+  # FASE 1: CI - Build & Unit Tests
+  # ------------------------------------------------------------------
+  ci-unit-tests:
+    name: 🧪 Unit Tests
     runs-on: ubuntu-latest
     steps:
       - name: 📥 Checkout
         uses: actions/checkout@v4
+
       - name: 🟢 Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
+
       - name: 📦 Instalar Dependencias
         run: npm install --legacy-peer-deps
+
+      - name: 🧪 Ejecutar Unit Tests
+        run: npx jest --testPathPattern=__tests__/unit --ci --coverage --reporters=default --reporters=jest-junit
+        env:
+          JEST_JUNIT_OUTPUT_DIR: reports
+          JEST_JUNIT_OUTPUT_NAME: unit-junit.xml
+
+      - name: 📊 Publicar Resultados Unit Tests
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: 📋 Reporte Unit Tests
+          path: reports/unit-junit.xml
+          reporter: jest-junit
+          fail-on-error: true
+
+      - name: 📈 Subir Cobertura
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 14
+
+      - name: 📋 Resumen de Cobertura
+        if: always()
+        run: |
+          echo "## 📊 Cobertura de Código" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f coverage/coverage-summary.json ]; then
+            node -e "
+              const c = require('./coverage/coverage-summary.json').total;
+              console.log('| Métrica | Cobertura |');
+              console.log('|---------|-----------|');
+              console.log('| Líneas | ' + c.lines.pct + '% |');
+              console.log('| Funciones | ' + c.functions.pct + '% |');
+              console.log('| Branches | ' + c.branches.pct + '% |');
+              console.log('| Statements | ' + c.statements.pct + '% |');
+            " >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ No se generó reporte de cobertura" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # ------------------------------------------------------------------
+  # FASE 2: CI - Integration Tests
+  # ------------------------------------------------------------------
+  ci-integration-tests:
+    name: 🔗 Integration Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📦 Instalar Dependencias
+        run: npm install --legacy-peer-deps
+
+      - name: 🔗 Ejecutar Integration Tests
+        run: npx jest --testPathPattern=__tests__/integration --ci --reporters=default --reporters=jest-junit
+        env:
+          JEST_JUNIT_OUTPUT_DIR: reports
+          JEST_JUNIT_OUTPUT_NAME: integration-junit.xml
+
+      - name: 📊 Publicar Resultados Integration Tests
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: 📋 Reporte Integration Tests
+          path: reports/integration-junit.xml
+          reporter: jest-junit
+          fail-on-error: true
+
+  # ------------------------------------------------------------------
+  # FASE 3: Build Check (depende de que pasen los tests)
+  # ------------------------------------------------------------------
+  build-check:
+    name: 🏗️ Build Check
+    needs: [ci-unit-tests, ci-integration-tests]
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📦 Instalar Dependencias
+        run: npm install --legacy-peer-deps
+
       - name: 🏗️ Prueba de Construcción
         run: npm run build:web
 
-  # 2. DEPLOY A QA (Automático al hacer push a Develop)
+      - name: ✅ Build Summary
+        if: success()
+        run: |
+          echo "## ✅ Build Exitoso" >> $GITHUB_STEP_SUMMARY
+          echo "La aplicación compiló correctamente para web." >> $GITHUB_STEP_SUMMARY
+
+  # ------------------------------------------------------------------
+  # FASE 4: Deploy QA (Preview) - Solo en develop
+  # ------------------------------------------------------------------
   deploy-qa:
     name: 🚀 Deploy QA (Preview)
     needs: build-check
@@ -45,16 +156,93 @@ jobs:
     steps:
       - name: 📥 Checkout
         uses: actions/checkout@v4
+
       - name: 🚀 Deploy a Vercel (QA)
         uses: amondnet/vercel-action@v25
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          # Sin argumentos, Vercel despliega en modo Preview por defecto
           working-directory: ./
 
-  # 3. DEPLOY A PRODUCCIÓN (Solo al mezclar en Master -> Con Candado)
+      - name: 📋 Deploy QA Summary
+        if: success()
+        run: |
+          echo "## 🚀 Deploy QA Exitoso" >> $GITHUB_STEP_SUMMARY
+          echo "Preview desplegado en Vercel." >> $GITHUB_STEP_SUMMARY
+
+  # ------------------------------------------------------------------
+  # FASE 5: E2E / Acceptance Tests (post-deploy QA)
+  # ------------------------------------------------------------------
+  acceptance-tests:
+    name: 🕵️ E2E Acceptance Tests
+    needs: deploy-qa
+    if: github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📦 Instalar Dependencias
+        run: npm install --legacy-peer-deps
+
+      - name: 🤖 Ejecutar E2E Tests
+        run: npx jest --testPathPattern=__tests__/e2e --ci --reporters=default --reporters=jest-junit
+        env:
+          JEST_JUNIT_OUTPUT_DIR: reports
+          JEST_JUNIT_OUTPUT_NAME: e2e-junit.xml
+
+      - name: 📊 Publicar Resultados E2E Tests
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: 📋 Reporte E2E Tests
+          path: reports/e2e-junit.xml
+          reporter: jest-junit
+          fail-on-error: true
+
+  # ------------------------------------------------------------------
+  # FASE 6: Crear PR automático develop -> master
+  # ------------------------------------------------------------------
+  create-pr:
+    name: 📩 Create PR to Master
+    needs: acceptance-tests
+    if: github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 📩 Generar PR
+        uses: repo-sync/pull-request@v2
+        with:
+          source_branch: "develop"
+          destination_branch: "master"
+          pr_title: "🚀 Release Candidate: ${{ github.sha }}"
+          pr_body: |
+            ## ✅ Pipeline Completo
+
+            - ✅ Unit Tests pasaron
+            - ✅ Integration Tests pasaron
+            - ✅ Build exitoso
+            - ✅ Deploy QA realizado
+            - ✅ E2E Tests pasaron
+
+            **Commit:** `${{ github.sha }}`
+            **Autor:** @${{ github.actor }}
+
+            Listo para deploy a Producción.
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+  # ------------------------------------------------------------------
+  # FASE 7: Deploy Producción (Solo en master, con aprobación manual)
+  # ------------------------------------------------------------------
   deploy-production:
     name: 🛡️ Deploy Production
     needs: build-check
@@ -66,13 +254,21 @@ jobs:
     steps:
       - name: 📥 Checkout
         uses: actions/checkout@v4
+
       - name: 🛑 Aprobación Manual
         run: echo "🔐 Despliegue aprobado por el usuario."
+
       - name: 🚀 Deploy a Vercel (Producción)
         uses: amondnet/vercel-action@v25
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: '--prod' # Forzamos producción
+          vercel-args: '--prod'
           working-directory: ./
+
+      - name: 📋 Deploy Prod Summary
+        if: success()
+        run: |
+          echo "## 🛡️ Deploy Producción Exitoso" >> $GITHUB_STEP_SUMMARY
+          echo "Aplicación desplegada en producción." >> $GITHUB_STEP_SUMMARY
