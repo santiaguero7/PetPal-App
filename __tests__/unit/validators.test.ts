@@ -53,7 +53,7 @@ describe('Auth Service - src/services/auth.ts', () => {
     mockedApi.post.mockResolvedValueOnce({ data: fakeResponse });
 
     const result = await registerUser(
-      '', 'juan@mail.com', 'Pass123', 'client',
+      'Juan', 'juan@mail.com', 'Pass123', 'client',
       '12345678', 'Calle 123', 'Palermo', '1122334455', 'Buenos Aires',
       -34.6037, -58.3816, null
     );
