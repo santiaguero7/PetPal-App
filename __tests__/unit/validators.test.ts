@@ -80,7 +80,7 @@ const sanitizeEmail = (email: string): string => {
 
 // TEST 1: Email válido
 test('TEST 1: Email válido debe retornar true', () => {
-  expect(isValidEmail('usuario@example.com')).toBe(true);
+  expect(isValidEmail('usuario@xample.com')).toBe(true);
 });
 
 // TEST 2: Email inválido
